@@ -1,23 +1,24 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 
-from game.models import Deck, Player
+from game.models import Deck, Player, Game
 # Create your views here.
 import random
 
 def start(request):
-    d = Deck()
     p1 = Player('Nat')
     p2 = Player('Murtuza')
-    for i in range(10):
-        p1.hand.append(d.deal())
-        p2.hand.append(d.deal())
+    game = Game(p1, p2)
+    if game.turn == p1:
+        current_hand = game.player1.hand
+    else:
+        current_hand = game.player2.hand
 
-    first_card = d.deal()
-    first_turn = random.choice([p1, p2])
-
-
-    return HttpResponse(f"{first_turn}'s turn, face card: {first_card}")
+    return HttpResponse(f"""
+                        {game.turn}'s turn, 
+                        current showing card: {game.current_card}. 
+                        {game.turn}'s cards: {current_hand}
+                        """)
 
 
 

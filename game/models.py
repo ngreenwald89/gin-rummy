@@ -6,6 +6,13 @@ import random
 
 class Card(object):
 
+    RANK_MAP = {
+        1: 'Ace',
+        11: 'Jack',
+        12: 'Queen',
+        13: 'King'
+    }
+
     def __init__(self, suit, rank):
 
         self.suit = self.validate_suit(suit)
@@ -32,10 +39,10 @@ class Card(object):
         return f'invalid rank: {rank}'
 
     def __str__(self):
-        return f'{self.rank} of {self.suit}'
+        return f'{self.RANK_MAP.get(self.rank, self.rank)} of {self.suit}'
 
     def __repr__(self):
-        return f'{self.rank} of {self.suit}'
+        return f'{self.RANK_MAP.get(self.rank, self.rank)} of {self.suit}'
 
 
 class Deck(object):
@@ -83,7 +90,70 @@ class Player(object):
         return f'Player: {self.name}'
 
 
+class Game(object):
 
+    def __init__(self, player1, player2):
+
+        self.deck = Deck()
+        self.player1 = player1
+        self.player2 = player2
+        self.game_over = False
+
+        self.start_game_deal()
+        self.current_card = self.deal_from_deck()
+        self.turn = random.choice([self.player1, self.player2])
+
+    def start_game_deal(self):
+        """
+        distribute cards to players at start of game
+        :return: 
+        """
+        for i in range(10):
+            self.player1.hand.append(self.deal_from_deck())
+            self.player2.hand.append(self.deal_from_deck())
+
+    def deal_from_deck(self):
+        if self.deck:
+            return self.deck.deal()
+
+        return "No cards left in Deck"
+
+    def is_game_over(self):
+        """
+        check if player has Gin
+        :return: 
+        """
+
+
+def validate_melds(cards):
+    """
+    
+    :param cards: 
+    :return: Boolean
+    """
+    return validate_same_rank(cards) or validate_run(cards)
+
+
+def validate_same_rank(cards):
+    if len(cards) not in (3, 4):
+        return False
+    return all(card.rank == cards[0].rank for card in cards)
+
+
+def validate_run(cards):
+    if len(cards) < 3:
+        return False
+    if not all(card.suit == cards[0].suit for card in cards):
+        return False
+
+    ranks = sorted([card.rank for card in cards])
+    prev_rank = ranks[0]
+    for rank in ranks[1:]:
+        if rank - prev_rank != 1:
+            return False
+        prev_rank = rank
+
+    return True
 
 # class Card(models.Model):
 #
