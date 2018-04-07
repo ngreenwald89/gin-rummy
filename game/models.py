@@ -1,166 +1,78 @@
 from django.db import models
-import random
 
+from login_app.models import UserProfileModel
+from django.contrib.auth.models import User
 # Create your models here.
 
 
-class Card(object):
+class DeckField(models.Field):
 
-    RANK_MAP = {
-        1: 'Ace',
-        11: 'Jack',
-        12: 'Queen',
-        13: 'King'
-    }
+    description = "Deck of cards for a given game"
 
-    def __init__(self, suit, rank):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        self.suit = self.validate_suit(suit)
-        self.rank = self.validate_rank(rank)
 
-    def validate_suit(self, suit):
-        """
-        :param suit: 
-        :return: 
-        """
-        if suit in ('Clubs', 'Spades', 'Hearts', 'Diamonds'):
-            return suit
+class CardField(models.Field):
 
-        return f'invalid suit: {suit}'
+    description = "Card"
 
-    def validate_rank(self, rank):
-        """
-        :param rank: 
-        :return: 
-        """
-        if type(rank) == int and rank > 0 and rank < 14:
-            return rank
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        return f'invalid rank: {rank}'
+
+class HandField(models.Field):
+
+    description = "Hand of cards for a given player"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+class RummyPlayer(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    hand = HandField()
 
     def __str__(self):
-        return f'{self.RANK_MAP.get(self.rank, self.rank)} of {self.suit}'
-
-    def __repr__(self):
-        return f'{self.RANK_MAP.get(self.rank, self.rank)} of {self.suit}'
+        return self.user.username
 
 
-class Deck(object):
+class RummyGame(models.Model):
 
-    def __init__(self):
-        self.deck = self.initialize_deck()
-
-    def initialize_deck(self):
-        deck = []
-        for suit in ('Clubs', 'Spades', 'Hearts', 'Diamonds'):
-            for rank in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13):
-                deck.append(Card(suit=suit, rank=rank))
-
-        random.shuffle(deck)
-
-        return deck
-
-    def shuffle(self):
-        random.shuffle(self.deck)
-
-    def cards_remaining(self):
-        return len(self.deck)
-
-    def deal(self):
-        return self.deck.pop()
-
-    def __str__(self):
-        return f'deck with {self.cards_remaining()} cards remaining'
-
-    def __repr__(self):
-        return f'deck with {self.cards_remaining()} cards remaining'
+    player1 = models.ForeignKey(RummyPlayer, related_name='player1', on_delete=models.CASCADE)
+    player2 = models.ForeignKey(RummyPlayer, related_name='player2', on_delete=models.CASCADE)
+    winner = models.ForeignKey(RummyPlayer, related_name='winner', on_delete=models.CASCADE)
+    turn = models.ForeignKey(RummyPlayer, related_name='turn', on_delete=models.CASCADE)
+    deck = DeckField()
+    current_card = CardField()
 
 
-class Player(object):
+class RummyCard(models.Model):
 
-    def __init__(self, name='defaultPlayer'):
+    SUIT_CHOICES = (
+        ('Hearts', 'Hearts'),
+        ('Diamonds', 'Diamonds'),
+        ('Clubs', 'Clubs'),
+        ('Spades', 'Spades'),
+    )
+    RANK_CHOICES = (
+        (1, 1),
+        (2, 2),
+        (3, 3),
+        (4, 4),
+        (5, 5),
+        (6, 6),
+        (7, 7),
+        (8, 8),
+        (9, 9),
+        (10, 10),
+        (11, 11),
+        (12, 12),
+        (13, 13),
+    )
 
-        self.name = name
-        self.hand = []
-
-    def __str__(self):
-        return f'Player: {self.name}'
-
-    def __repr__(self):
-        return f'Player: {self.name}'
-
-
-class Game(object):
-
-    def __init__(self, player1, player2):
-
-        self.deck = Deck()
-        self.player1 = player1
-        self.player2 = player2
-        self.game_over = False
-
-        self.start_game_deal()
-        self.current_card = self.deal_from_deck()
-        self.turn = random.choice([self.player1, self.player2])
-
-    def start_game_deal(self):
-        """
-        distribute cards to players at start of game
-        :return: 
-        """
-        for i in range(10):
-            self.player1.hand.append(self.deal_from_deck())
-            self.player2.hand.append(self.deal_from_deck())
-
-    def deal_from_deck(self):
-        if self.deck:
-            return self.deck.deal()
-
-        return "No cards left in Deck"
-
-    def is_game_over(self):
-        """
-        check if player has Gin
-        :return: 
-        """
-
-
-def validate_melds(cards):
-    """
-    
-    :param cards: 
-    :return: Boolean
-    """
-    return validate_same_rank(cards) or validate_run(cards)
-
-
-def validate_same_rank(cards):
-    if len(cards) not in (3, 4):
-        return False
-    return all(card.rank == cards[0].rank for card in cards)
-
-
-def validate_run(cards):
-    if len(cards) < 3:
-        return False
-    if not all(card.suit == cards[0].suit for card in cards):
-        return False
-
-    ranks = sorted([card.rank for card in cards])
-    prev_rank = ranks[0]
-    for rank in ranks[1:]:
-        if rank - prev_rank != 1:
-            return False
-        prev_rank = rank
-
-    return True
-
-# class Card(models.Model):
-#
-#     SUIT_CHOICES = ('club', 'heart', 'spade', 'diamond')
-#     RANK_CHOICES = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
-#     suit = models.CharField(max_length=10, choices=SUIT_CHOICES)
-#     rank = models.IntegerField(choices=RANK_CHOICES)
+    suit = models.TextField(choices=SUIT_CHOICES)
+    rank = models.IntegerField(choices=RANK_CHOICES)
 
 
 # class Deck(models.Model):
