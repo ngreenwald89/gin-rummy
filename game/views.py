@@ -10,6 +10,11 @@ import random
 
 
 def start1(request):
+    """
+    old way - does not use Django classes
+    :param request: 
+    :return: 
+    """
     p1 = Player('Nat')
     p2 = Player('Murtuza')
     game = Game(p1, p2)
@@ -26,6 +31,11 @@ def start1(request):
 
 
 def start(request):
+    """
+    being used - has django classes
+    :param request: 
+    :return: 
+    """
     deck = initialize_deck()
 
     users = User.objects.all()
@@ -44,6 +54,13 @@ def start(request):
                             current showing card: {game.current_card}. 
                             {game.turn}'s cards: {game.turn.hand}
                             """)
+
+
+def game(request):
+
+    if request.method == 'POST':
+        pass
+    else:
 
 
 def start_game_deal(deck, player1, player2):
