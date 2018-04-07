@@ -18,14 +18,16 @@ from django.conf.urls import include
 from django.contrib import admin
 from django.urls import path
 
-from login_app import views
+from login_app import views as login_views
+from game import views as game_views
 
 urlpatterns = [
 
-    path('', views.index, name='index'),
+    path('', login_views.index, name='index'),
     path('admin/', admin.site.urls),
     path('login_app/', include('login_app.urls')),
-    path('logout/', views.user_logout, name='logout'),
-    path('special/', views.special, name='special'),
+    path('logout/', login_views.user_logout, name='logout'),
+    path('special/', login_views.special, name='special'),
+    path('game/', include('game.urls'))
 
 ]
