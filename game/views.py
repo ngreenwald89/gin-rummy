@@ -55,13 +55,14 @@ def start(request):
         request.session['game_pk'] = game.pk
         print(game.pk)
 
+    return HttpResponseRedirect('/game/turn/')
     # return render(request, 'turn.html')
 
-    return HttpResponse(f"""
-                            {game.turn}'s turn,
-                            current showing card: {game.current_card}.
-                            {game.turn}'s cards: {game.turn.hand}
-                            """)
+    # return HttpResponse(f"""
+    #                         {game.turn}'s turn,
+    #                         current showing card: {game.current_card}.
+    #                         {game.turn}'s cards: {game.turn.hand}
+    #                         """)
 
 
 def turn(request):
@@ -75,7 +76,7 @@ def turn(request):
     game = RummyGame.objects.get(pk=game_pk)
     print(game)
 
-    return render(request, 'turn.html')
+    return render(request, 'game/turn.html')
 
 
 def game(request):
