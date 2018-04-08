@@ -1,19 +1,21 @@
 {% extends "login_app/base.html" %}
 {% block body_block %}
-    <div class="container">
+  <div class="container">
     <div class="jumbotron">
-      {% if your_turn %}
-        <h2>Go ahead and register below !</h2>
+        <h3>Deck Card: {{ current_card }}</h3>
+        <h1>Turn: {{ turn }}</h1>
+        <h4>Hand: {{ hand }}</h4>
 
-        <form enctype="multipart/form-data" method="POST">
-          {% csrf_token %}
-          {{ user_form.as_p }}
-          {{ profile_form.as_p }}
-          <input type="submit" name="" value="Select">
+        <form action="{% url 'game:turn' %}" method="post">
+            <h4>Your Turn Options:</h4>
+            {% csrf_token %}
+            {% for choice in form %}
+                {{ choice }}
+                <!--<input type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice }}" />-->
+                <!--<label for="choice{{ forloop.counter }}">{{ choice }}</label><br />-->
+            {% endfor %}
+            <input type="submit" value="Select" />
         </form>
-      {% else %}
-        <h1>Not Your Turn</h1>
-      {% endif %}
 
     </div>
 

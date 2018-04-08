@@ -1,27 +1,35 @@
 import random
 
-
-class Card(object):
-    RANK_MAP = {
+RANK_MAP = {
         1: 'Ace',
         11: 'Jack',
         12: 'Queen',
         13: 'King'
     }
 
-    SUIT_MAP = {
-        'C': 'Clubs',
-        'S': 'Spades',
-        'H': 'Hearts',
-        'D': 'Diamonds',
-    }
+SUIT_MAP = {
+    'C': 'Clubs',
+    'S': 'Spades',
+    'H': 'Hearts',
+    'D': 'Diamonds',
+}
 
-    SUIT_VAL = {
-        'C': 0,
-        'S': 1,
-        'H': 2,
-        'D': 3,
-    }
+SUIT_VAL = {
+    'C': 0,
+    'S': 1,
+    'H': 2,
+    'D': 3,
+}
+
+REVERSE_SUIT_VAL = {
+    0: 'C',
+    1: 'S',
+    2: 'H',
+    3: 'D',
+}
+
+
+class Card(object):
 
     def __init__(self, suit, rank):
 
@@ -50,13 +58,30 @@ class Card(object):
 
     def as_number(self):
 
-        return self.rank + self.SUIT_VAL[self.suit] * 13
+        return self.rank + SUIT_VAL[self.suit] * 13
 
     def __str__(self):
-        return f'{self.RANK_MAP.get(self.rank, self.rank)} of {self.SUIT_MAP.get(self.suit)}'
+        return f'{RANK_MAP.get(self.rank, self.rank)} of {SUIT_MAP.get(self.suit)}'
 
     def __repr__(self):
-        return f'{self.RANK_MAP.get(self.rank, self.rank)} of {self.SUIT_MAP.get(self.suit)}'
+        return f'{RANK_MAP.get(self.rank, self.rank)} of {SUIT_MAP.get(self.suit)}'
+
+
+def card_from_number(num_string):
+    """
+    gets number of card as stored in db as number string
+    :param num_string: 
+    :return: 
+    """
+    num = int(num_string)
+    if num % 13 == 0:
+        suit = (num // 13) - 1
+        rank = 13
+    else:
+        suit, rank = divmod(num, 13)
+
+    return Card(suit=REVERSE_SUIT_VAL[suit], rank=rank)
+
 
 
 class Deck(object):
