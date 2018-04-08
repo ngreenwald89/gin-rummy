@@ -9,6 +9,20 @@ class Card(object):
         13: 'King'
     }
 
+    SUIT_MAP = {
+        'C': 'Clubs',
+        'S': 'Spades',
+        'H': 'Hearts',
+        'D': 'Diamonds',
+    }
+
+    SUIT_VAL = {
+        'C': 0,
+        'S': 1,
+        'H': 2,
+        'D': 3,
+    }
+
     def __init__(self, suit, rank):
 
         self.suit = self.validate_suit(suit)
@@ -19,7 +33,7 @@ class Card(object):
         :param suit: 
         :return: 
         """
-        if suit in ('Clubs', 'Spades', 'Hearts', 'Diamonds'):
+        if suit in ('C', 'S', 'H', 'D'):
             return suit
 
         return f'invalid suit: {suit}'
@@ -34,11 +48,15 @@ class Card(object):
 
         return f'invalid rank: {rank}'
 
+    def as_number(self):
+
+        return self.rank + self.SUIT_VAL[self.suit] * 13
+
     def __str__(self):
-        return f'{self.RANK_MAP.get(self.rank, self.rank)} of {self.suit}'
+        return f'{self.RANK_MAP.get(self.rank, self.rank)} of {self.SUIT_MAP.get(self.suit)}'
 
     def __repr__(self):
-        return f'{self.RANK_MAP.get(self.rank, self.rank)} of {self.suit}'
+        return f'{self.RANK_MAP.get(self.rank, self.rank)} of {self.SUIT_MAP.get(self.suit)}'
 
 
 class Deck(object):
@@ -47,7 +65,7 @@ class Deck(object):
 
     def initialize_deck(self):
         deck = []
-        for suit in ('Clubs', 'Spades', 'Hearts', 'Diamonds'):
+        for suit in ('C', 'S', 'H', 'D'):
             for rank in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13):
                 deck.append(Card(suit=suit, rank=rank))
 
@@ -69,6 +87,7 @@ class Deck(object):
 
     def __repr__(self):
         return f'deck with {self.cards_remaining()} cards remaining'
+
 
 
 class Player(object):
@@ -146,3 +165,5 @@ def validate_run(cards):
         prev_rank = rank
 
     return True
+
+# def parse_deck(deck_string):
