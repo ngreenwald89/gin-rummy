@@ -10,22 +10,22 @@ from login_app.forms import UserForm
 
 # Create your views here.
 
-def index(request):
-    return render(request,'login_app/index.html')
+def home(request):
+    return render(request,'login_app/home.html')
 
 
-@login_required
-def special(request):
-    # Remember to also set login url in settings.py!
-    # LOGIN_URL = '/login_app/user_login/'
-    return HttpResponse("You are logged in. Nice!")
+# @login_required
+# def special(request):
+#     # Remember to also set login url in settings.py!
+#     # LOGIN_URL = '/login_app/user_login/'
+#     return HttpResponse("You are logged in. Nice!")
 
 @login_required
 def user_logout(request):
     # Log out the user.
     logout(request)
     # Return to homepage.
-    return HttpResponseRedirect(reverse('index'))
+    return HttpResponseRedirect(reverse('home'))
 
 def register(request):
 
@@ -92,30 +92,31 @@ def register(request):
 def user_login(request):
 
     if request.method == 'POST':
-        # First get the username and password supplied
+        # Get : username and password
         username = request.POST.get('username')
         password = request.POST.get('password')
 
-        # Django's built-in authentication function:
+        # built-in auth function:
         user = authenticate(username=username, password=password)
 
-        # If we have a user
+        # If user is present !
         if user:
-            #Check it the account is active
-            if user.is_active:
+            #If the user is active
+            if user.is_active :
                 # Log the user in.
                 login(request,user)
-                # Send the user back to some page.
-                # In this case their homepage.
-                return HttpResponseRedirect(reverse('index'))
+                # Send the user to their game page.
+
+                return HttpResponseRedirect('/game/start')
+
             else:
                 # If account is not active:
                 return HttpResponse("Your account is not active.")
         else:
             print("Someone tried to login and failed.")
             print("They used username: {} and password: {}".format(username,password))
-            return HttpResponse("Invalid login details supplied.")
+            return HttpResponse("Invalid login entered")
 
     else:
-        #Nothing has been provided for username or password.
+        #username or password are empty, redirect to the same page to retry.
         return render(request, 'login_app/login.html', {})
