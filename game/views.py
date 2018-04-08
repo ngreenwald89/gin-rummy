@@ -1,12 +1,11 @@
-from django.shortcuts import render
+# Create your views here.
+import random
+
+from django.contrib.auth.models import User
 from django.http import HttpResponse
 
 from game.models import *
 from game.rummy_utils import *
-from django.contrib.auth.models import User
-
-# Create your views here.
-import random
 
 
 def start1(request):
@@ -60,7 +59,7 @@ def game(request):
 
     if request.method == 'POST':
         pass
-    else:
+    # else:
 
 
 def start_game_deal(deck, player1, player2):
