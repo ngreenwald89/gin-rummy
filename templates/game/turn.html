@@ -11,8 +11,6 @@
             {% csrf_token %}
             {% for choice in form %}
                 {{ choice }}
-                <!--<input type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice }}" />-->
-                <!--<label for="choice{{ forloop.counter }}">{{ choice }}</label><br />-->
             {% endfor %}
             <input type="submit" value="Select" />
         </form>

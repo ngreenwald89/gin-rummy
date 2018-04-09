@@ -67,7 +67,7 @@ class Card(object):
         return f'{RANK_MAP.get(self.rank, self.rank)} of {SUIT_MAP.get(self.suit)}'
 
 
-def card_from_number(num_string):
+def string_to_card(num_string):
     """
     gets number of card as stored in db as number string
     :param num_string: 
