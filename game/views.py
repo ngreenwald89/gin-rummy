@@ -57,7 +57,6 @@ def turn(request):
         form = TurnForm(request.POST)
         if form.is_valid():
             choice = form.cleaned_data['turn_choices']
-            print('the choice', choice)
             game = handle_turn_choice(choice, game)
             context['hand'] = string_to_deck(game.turn.hand)
             context['current_card'] = string_to_card(game.current_card)
@@ -120,7 +119,8 @@ def handle_turn_choice(choice, game):
         rp.hand = deck_to_string(hand)
         rp.save()
         game.turn.hand = rp.hand
-        game.current_card = str(deck.pop().as_number())
+        game.current_card = deck.pop().card_to_string()
+        game.deck = deck_to_string(deck)
         game.save()
 
     return game

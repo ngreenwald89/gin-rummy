@@ -60,6 +60,9 @@ class Card(object):
 
         return self.rank + SUIT_VAL[self.suit] * 13
 
+    def card_to_string(self):
+        return str(self.as_number())
+
     def __str__(self):
         return f'{RANK_MAP.get(self.rank, self.rank)} of {SUIT_MAP.get(self.suit)}'
 
