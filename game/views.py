@@ -1,13 +1,11 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 
+# Create your views here.
+
 from game.forms import TurnForm
 from game.models import *
 from game.rummy_utils import *
-from django.contrib.auth.models import User
-
-# Create your views here.
-import random
 
 
 def start(request):
