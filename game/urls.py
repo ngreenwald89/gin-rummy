@@ -9,4 +9,5 @@ app_name = 'game'
 urlpatterns = [
     url('^start/$', views.start, name='start'),
     url('^turn/$', views.turn, name='turn'),
+    url('^discard/$', views.discard, name='discard'),
 ]

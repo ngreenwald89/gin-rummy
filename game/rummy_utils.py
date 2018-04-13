@@ -69,6 +69,9 @@ class Card(object):
     def __repr__(self):
         return f'{RANK_MAP.get(self.rank, self.rank)} of {SUIT_MAP.get(self.suit)}'
 
+    def __eq__(self, other):
+        return self.as_number() == other.as_number()
+
 
 def string_to_card(num_string):
     """

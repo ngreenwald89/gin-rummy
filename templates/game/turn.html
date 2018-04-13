@@ -6,14 +6,31 @@
         <h1>Turn: {{ turn }}</h1>
         <h4>Hand: {{ hand }}</h4>
 
-        <form action="{% url 'game:turn' %}" method="post">
-            <h4>Your Turn Options:</h4>
-            {% csrf_token %}
-            {% for choice in form %}
-                {{ choice }}
-            {% endfor %}
-            <input type="submit" value="Select" />
-        </form>
+        {% block turn_options_form %}
+            {% if turn_options_form %}
+                <form action="{% url 'game:turn' %}" method="post">
+                    <h4>Your Turn Options:</h4>
+                    {% csrf_token %}
+                    {% for choice in turn_options_form %}
+                        {{ choice }}
+                    {% endfor %}
+                    <input type="submit" value="Select" />
+                </form>
+            {% endif %}
+        {% endblock %}
+
+        <!--{% block discard_form %}-->
+            <!--{% if discard_form %}-->
+                <!--<form action="{% url 'game:turn' %}" method="post">-->
+                    <!--<h4>Discard Options:</h4>-->
+                    <!--{% csrf_token %}-->
+                    <!--{% for choice in discard_form %}-->
+                        <!--{{ choice }}-->
+                    <!--{% endfor %}-->
+                    <!--<input type="submit" value="Select" />-->
+                <!--</form>-->
+            <!--{% endif %}-->
+        <!--{% endblock %}-->
 
     </div>
 
