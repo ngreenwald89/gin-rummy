@@ -1,0 +1,19 @@
+{% extends "game/base.html" %}
+{% block turn_block %}
+    <div class="turn_container">
+        {% block discard_form %}
+            {% if discard_form %}
+                <form action="{% url 'game:discard' %}" method="post">
+                    <h4>Discard Options:</h4>
+                    {% csrf_token %}
+                    {% for choice in discard_form %}
+                        {{ choice }}
+                    {% endfor %}
+                    <input type="submit" value="Select" />
+                </form>
+            {% endif %}
+        {% endblock %}
+    </div>
+
+
+{% endblock %}

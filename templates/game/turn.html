@@ -1,0 +1,39 @@
+{% extends "login_app/base.html" %}
+{% block body_block %}
+  <div class="container">
+    <div class="jumbotron">
+        <h3>Deck Card: {{ current_card }}</h3>
+        <h1>Turn: {{ turn }}</h1>
+        <h4>Hand: {{ hand }}</h4>
+
+        {% block turn_options_form %}
+            {% if turn_options_form %}
+                <form action="{% url 'game:turn' %}" method="post">
+                    <h4>Your Turn Options:</h4>
+                    {% csrf_token %}
+                    {% for choice in turn_options_form %}
+                        {{ choice }}
+                    {% endfor %}
+                    <input type="submit" value="Select" />
+                </form>
+            {% endif %}
+        {% endblock %}
+
+        <!--{% block discard_form %}-->
+            <!--{% if discard_form %}-->
+                <!--<form action="{% url 'game:turn' %}" method="post">-->
+                    <!--<h4>Discard Options:</h4>-->
+                    <!--{% csrf_token %}-->
+                    <!--{% for choice in discard_form %}-->
+                        <!--{{ choice }}-->
+                    <!--{% endfor %}-->
+                    <!--<input type="submit" value="Select" />-->
+                <!--</form>-->
+            <!--{% endif %}-->
+        <!--{% endblock %}-->
+
+    </div>
+
+  </div>
+
+{% endblock %}

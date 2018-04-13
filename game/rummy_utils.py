@@ -1,13 +1,35 @@
 import random
 
-
-class Card(object):
-    RANK_MAP = {
+RANK_MAP = {
         1: 'Ace',
         11: 'Jack',
         12: 'Queen',
         13: 'King'
     }
+
+SUIT_MAP = {
+    'C': 'Clubs',
+    'S': 'Spades',
+    'H': 'Hearts',
+    'D': 'Diamonds',
+}
+
+SUIT_VAL = {
+    'C': 0,
+    'S': 1,
+    'H': 2,
+    'D': 3,
+}
+
+REVERSE_SUIT_VAL = {
+    0: 'C',
+    1: 'S',
+    2: 'H',
+    3: 'D',
+}
+
+
+class Card(object):
 
     def __init__(self, suit, rank):
 
@@ -19,7 +41,7 @@ class Card(object):
         :param suit: 
         :return: 
         """
-        if suit in ('Clubs', 'Spades', 'Hearts', 'Diamonds'):
+        if suit in ('C', 'S', 'H', 'D'):
             return suit
 
         return f'invalid suit: {suit}'
@@ -34,11 +56,38 @@ class Card(object):
 
         return f'invalid rank: {rank}'
 
+    def as_number(self):
+
+        return self.rank + SUIT_VAL[self.suit] * 13
+
+    def card_to_string(self):
+        return str(self.as_number())
+
     def __str__(self):
-        return f'{self.RANK_MAP.get(self.rank, self.rank)} of {self.suit}'
+        return f'{RANK_MAP.get(self.rank, self.rank)} of {SUIT_MAP.get(self.suit)}'
 
     def __repr__(self):
-        return f'{self.RANK_MAP.get(self.rank, self.rank)} of {self.suit}'
+        return f'{RANK_MAP.get(self.rank, self.rank)} of {SUIT_MAP.get(self.suit)}'
+
+    def __eq__(self, other):
+        return self.as_number() == other.as_number()
+
+
+def string_to_card(num_string):
+    """
+    gets number of card as stored in db as number string
+    :param num_string: 
+    :return: 
+    """
+    num = int(num_string)
+    if num % 13 == 0:
+        suit = (num // 13) - 1
+        rank = 13
+    else:
+        suit, rank = divmod(num, 13)
+
+    return Card(suit=REVERSE_SUIT_VAL[suit], rank=rank)
+
 
 
 class Deck(object):
@@ -47,7 +96,7 @@ class Deck(object):
 
     def initialize_deck(self):
         deck = []
-        for suit in ('Clubs', 'Spades', 'Hearts', 'Diamonds'):
+        for suit in ('C', 'S', 'H', 'D'):
             for rank in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13):
                 deck.append(Card(suit=suit, rank=rank))
 
@@ -69,6 +118,7 @@ class Deck(object):
 
     def __repr__(self):
         return f'deck with {self.cards_remaining()} cards remaining'
+
 
 
 class Player(object):
@@ -146,3 +196,5 @@ def validate_run(cards):
         prev_rank = rank
 
     return True
+
+# def parse_deck(deck_string):
