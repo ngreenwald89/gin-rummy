@@ -89,7 +89,6 @@ def string_to_card(num_string):
     return Card(suit=REVERSE_SUIT_VAL[suit], rank=rank)
 
 
-
 class Deck(object):
     def __init__(self):
         self.deck = self.initialize_deck()
@@ -118,7 +117,6 @@ class Deck(object):
 
     def __repr__(self):
         return f'deck with {self.cards_remaining()} cards remaining'
-
 
 
 class Player(object):
@@ -170,20 +168,30 @@ class Game(object):
 def validate_meld(cards):
     """
 
-    :param cards: 
+    :param cards: list of Card objects
     :return: Boolean
     """
     return validate_same_rank(cards) or validate_run(cards)
 
 
 def validate_same_rank(cards):
+    """
+    validate 3 of a kind or 4 of a kind
+    :param cards: list of Card objects
+    :return: Boolean
+    """
     if len(cards) not in (3, 4):
         return False
     return all(card.rank == cards[0].rank for card in cards)
 
 
 def validate_run(cards):
-    if len(cards) < 3:
+    """
+    a run is 3 to 10 consecutive cards of the same suit
+    :param cards: list of Card objects
+    :return: Boolean 
+    """
+    if len(cards) < 3 or len(cards) > 10:
         return False
     if not all(card.suit == cards[0].suit for card in cards):
         return False
@@ -196,5 +204,3 @@ def validate_run(cards):
         prev_rank = rank
 
     return True
-
-# def parse_deck(deck_string):

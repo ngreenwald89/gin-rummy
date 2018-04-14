@@ -4,7 +4,7 @@ from game.models import RummyPlayer
 
 class TurnForm(forms.Form):
 
-    CHOICES = [('current_card', 'current_card'), ('top_of_deck_card', 'top_of_deck_card')]
+    CHOICES = [('current_card', 'current_card', 'declare_gin'), ('top_of_deck_card', 'top_of_deck_card', 'declare_gin')]
     turn_choices = forms.ChoiceField(choices=CHOICES, label='turn_choices')
 
 

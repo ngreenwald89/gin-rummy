@@ -1,10 +1,11 @@
+from django.contrib.auth.models import User
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect
 
 # Create your views here.
 
-from game.forms import TurnForm, DiscardForm
-from game.models import *
+from game.forms import DiscardForm, TurnForm
+from game.models import RummyGame, RummyPlayer
 from game.rummy_utils import *
 
 
@@ -46,13 +47,6 @@ def turn(request):
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
 
-    context = dict()
-    context['turn'] = game.turn
-    context['current_card'] = string_to_card(game.current_card)
-
-    hand = game.turn.hand
-    context['hand'] = string_to_deck(hand)
-
     if request.method == 'POST':
         form = TurnForm(request.POST)
         if form.is_valid():
@@ -62,6 +56,10 @@ def turn(request):
     else:
         form = TurnForm()
 
+    context = dict()
+    context['turn'] = game.turn
+    context['current_card'] = string_to_card(game.current_card)
+    context['hand'] = string_to_deck(game.turn.hand)
     context['turn_options_form'] = form
 
     return render(request, 'game/turn.html', context)
@@ -77,13 +75,9 @@ def discard(request):
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
 
-    context = dict()
-    context['turn'] = game.turn
-    context['current_card'] = string_to_card(game.current_card)
-
-    hand = game.turn.hand
-    context['hand'] = string_to_deck(hand)
-    list_of_cards = [(card.card_to_string(), str(card)) for card in context['hand']]
+    hand = string_to_deck(game.turn.hand)
+    # for discard_form, discard choices come from current hand. Pairs of cards with (model_value, display_value)
+    list_of_cards = [(card.card_to_string(), str(card)) for card in hand]
 
     if request.method == 'POST':
         form = DiscardForm(list_of_cards=list_of_cards, data=request.POST or None)
@@ -107,7 +101,11 @@ def discard(request):
     else:
         form = DiscardForm(list_of_cards=list_of_cards)
 
-        context['discard_form'] = form
+    context = dict()
+    context['turn'] = game.turn
+    context['current_card'] = string_to_card(game.current_card)
+    context['hand'] = hand
+    context['discard_form'] = form
 
     return render(request, 'game/discard.html', context)
 
@@ -121,15 +119,13 @@ def handle_discard_choice(discard_card, game):
     """
     print(f'in handle discard, {discard_card}')
     rp = RummyPlayer.objects.get(id=game.turn.id)
+
     hand = string_to_deck(game.turn.hand)
-    deck = string_to_deck(game.deck)
-
     hand.remove(discard_card)
-    game.current_card = discard_card.card_to_string()
-
     rp.hand = deck_to_string(hand)
     rp.save()
 
+    game.current_card = discard_card.card_to_string()
     game.save()
 
     return game
@@ -178,7 +174,8 @@ def handle_turn_choice(choice, game):
         game.turn.hand = rp.hand
         game.deck = deck_to_string(deck)
         game.save()
-    else:
+
+    elif choice == 'current_card':
         # add current_card to hand
         hand.append(string_to_card(game.current_card))
         rp.hand = deck_to_string(hand)
@@ -187,3 +184,8 @@ def handle_turn_choice(choice, game):
         game.current_card = deck.pop().card_to_string()
         game.deck = deck_to_string(deck)
         game.save()
+
+    elif choice == 'declare_gin':
+        # determine if hand has gin: all cards in melds
+
+        pass
