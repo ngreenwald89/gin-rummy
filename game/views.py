@@ -20,15 +20,17 @@ def start(request):
     users = User.objects.all()
     player1 = RummyPlayer(user=users[0])
     player2 = RummyPlayer(user=users[1])
-    hand1 = ','.join([str(deck.pop().as_number()) for i in range(10)])
-    hand2 = ','.join([str(deck.pop().as_number()) for i in range(10)])
+    hand1 = cards_to_string([deck.pop() for i in range(10)])
+    hand2 = cards_to_string([deck.pop() for i in range(10)])
+    # hand1 = ','.join([str(deck.pop().as_number()) for i in range(10)])
+    # hand2 = ','.join([str(deck.pop().as_number()) for i in range(10)])
     player1.hand = hand1
     player2.hand = hand2
     player1.save()
     player2.save()
 
     current_card = deck.pop().card_to_string()
-    game = RummyGame(player1=player1, player2=player2, turn=player1, deck=deck_to_string(deck))
+    game = RummyGame(player1=player1, player2=player2, turn=player1, deck=cards_to_string(deck))
     game.current_card = current_card
     game.save()
     request.session['game_pk'] = game.pk
@@ -59,7 +61,8 @@ def turn(request):
     context = dict()
     context['turn'] = game.turn
     context['current_card'] = string_to_card(game.current_card)
-    context['hand'] = string_to_deck(game.turn.hand)
+    context['hand'] = string_to_cards(game.turn.hand)
+    context['melds'] = game.turn.identify_melds()
     context['turn_options_form'] = form
 
     return render(request, 'game/turn.html', context)
@@ -75,7 +78,7 @@ def discard(request):
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
 
-    hand = string_to_deck(game.turn.hand)
+    hand = game.turn.string_to_hand()
     # for discard_form, discard choices come from current hand. Pairs of cards with (model_value, display_value)
     list_of_cards = [(card.card_to_string(), str(card)) for card in hand]
 
@@ -105,6 +108,7 @@ def discard(request):
     context['turn'] = game.turn
     context['current_card'] = string_to_card(game.current_card)
     context['hand'] = hand
+    context['melds'] = game.turn.identify_melds()
     context['discard_form'] = form
 
     return render(request, 'game/discard.html', context)
@@ -120,9 +124,9 @@ def handle_discard_choice(discard_card, game):
     print(f'in handle discard, {discard_card}')
     rp = RummyPlayer.objects.get(id=game.turn.id)
 
-    hand = string_to_deck(game.turn.hand)
+    hand = string_to_cards(game.turn.hand)
     hand.remove(discard_card)
-    rp.hand = deck_to_string(hand)
+    rp.hand = cards_to_string(hand)
     rp.save()
 
     game.current_card = discard_card.card_to_string()
@@ -142,47 +146,29 @@ def initialize_deck():
     return deck
 
 
-def string_to_deck(card_string):
-    """
-    convert deck field in from db string to list of Card objects
-    :param card_string: n1,n2, ...
-    :return: [Card1, Card2, ...]
-    """
-    return list(map(string_to_card, card_string.split(',')))
-
-
-def deck_to_string(deck):
-    """
-    convert list of Card objects to string for db deck field
-    :param deck: 
-    :return: 
-    """
-    return ','.join(map(lambda x: str(x.as_number()), deck))
-
-
 def handle_turn_choice(choice, game):
 
     rp = RummyPlayer.objects.get(id=game.turn.id)
-    hand = string_to_deck(game.turn.hand)
-    deck = string_to_deck(game.deck)
+    hand = string_to_cards(game.turn.hand)
+    deck = string_to_cards(game.deck)
 
     if choice == 'top_of_deck_card':
         # add top of deck_card to hand
         hand.append(deck.pop())
-        rp.hand = deck_to_string(hand)
+        rp.hand = cards_to_string(hand)
         rp.save()
         game.turn.hand = rp.hand
-        game.deck = deck_to_string(deck)
+        game.deck = cards_to_string(deck)
         game.save()
 
     elif choice == 'current_card':
         # add current_card to hand
         hand.append(string_to_card(game.current_card))
-        rp.hand = deck_to_string(hand)
+        rp.hand = cards_to_string(hand)
         rp.save()
         game.turn.hand = rp.hand
         game.current_card = deck.pop().card_to_string()
-        game.deck = deck_to_string(deck)
+        game.deck = cards_to_string(deck)
         game.save()
 
     elif choice == 'declare_gin':
