@@ -1,7 +1,7 @@
 from django.db import models
 
 from django.contrib.auth.models import User
-from game.rummy_utils import identify_melds, cards_to_string, string_to_cards
+from game.rummy_utils import identify_melds, string_to_cards
 # Create your models here.
 
 

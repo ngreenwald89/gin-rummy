@@ -234,6 +234,9 @@ def cards_to_string(cards):
     return ','.join(map(lambda x: str(x.as_number()), cards))
 
 
+def sort_cards(cards):
+    return sorted(cards, key=lambda card: (card.suit, card.rank))
+
 if __name__ == '__main__':
     d = Deck()
     hand = []

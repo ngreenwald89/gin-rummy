@@ -61,7 +61,7 @@ def turn(request):
     context = dict()
     context['turn'] = game.turn
     context['current_card'] = string_to_card(game.current_card)
-    context['hand'] = string_to_cards(game.turn.hand)
+    context['hand'] = sort_cards(string_to_cards(game.turn.hand))
     context['melds'] = game.turn.identify_melds()
     context['turn_options_form'] = form
 
@@ -126,7 +126,7 @@ def handle_discard_choice(discard_card, game):
 
     hand = string_to_cards(game.turn.hand)
     hand.remove(discard_card)
-    rp.hand = cards_to_string(hand)
+    rp.hand = cards_to_string(sort_cards(hand))
     rp.save()
 
     game.current_card = discard_card.card_to_string()
@@ -155,7 +155,7 @@ def handle_turn_choice(choice, game):
     if choice == 'top_of_deck_card':
         # add top of deck_card to hand
         hand.append(deck.pop())
-        rp.hand = cards_to_string(hand)
+        rp.hand = cards_to_string(sort_cards(hand))
         rp.save()
         game.turn.hand = rp.hand
         game.deck = cards_to_string(deck)
@@ -164,7 +164,7 @@ def handle_turn_choice(choice, game):
     elif choice == 'current_card':
         # add current_card to hand
         hand.append(string_to_card(game.current_card))
-        rp.hand = cards_to_string(hand)
+        rp.hand = cards_to_string(sort_cards(hand))
         rp.save()
         game.turn.hand = rp.hand
         game.current_card = deck.pop().card_to_string()
