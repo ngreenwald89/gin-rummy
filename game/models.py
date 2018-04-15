@@ -1,6 +1,7 @@
+# from login_app.models import UserProfileModel
+from django.contrib.auth.models import User
 from django.db import models
 
-from django.contrib.auth.models import User
 from game.rummy_utils import identify_melds, string_to_cards
 # Create your models here.
 

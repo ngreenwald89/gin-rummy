@@ -36,6 +36,13 @@ def start(request):
     request.session['game_pk'] = game.pk
     print(game.pk)
 
+    # render function that makes use of the new game.html page created !!
+
+    # return HttpResponse(f"""
+    #                         {game.turn}'s turn,
+    #                         current showing card: {game.current_card}.
+    #                         {game.turn}'s cards: {game.turn.hand}
+    #                         """)
     return HttpResponseRedirect('/game/turn/')
 
 

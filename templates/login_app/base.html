@@ -12,11 +12,11 @@
       <div class="container">
         <ul class="nav navbar-nav">
 
-          {# Django Home Link / Admin Link / Register Link#}
-          <li><a class="navbar-brand" href="{% url 'index' %}">Gin Rummy app</a></li>
+
+          <li><a class="navbar-brand" href="{% url 'home' %}">Gin Rummy </a></li>
           <li><a class="navbar-link" href="{% url 'admin:index' %}">Admin</a></li>
           <li><a class="navbar-link" href="{% url 'login_app:register' %}">Register</a></li>
-          <li><a class="navbar-link" href="{% url 'game:start' %}">Game</a></li>
+          <!--<li><a class="navbar-link" href="{% url 'game:start' %}">Game</a></li>-->
 
           {# logic on what to display for last item#}
           {% if user.is_authenticated %}

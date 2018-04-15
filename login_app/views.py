@@ -10,8 +10,8 @@ from login_app.forms import UserForm
 
 # Create your views here.
 
-def index(request):
-    return render(request,'login_app/index.html')
+def home(request):
+    return render(request,'login_app/home.html')
 
 
 # @login_required
@@ -25,7 +25,7 @@ def user_logout(request):
     # Log out the user.
     logout(request)
     # Return to homepage.
-    return HttpResponseRedirect(reverse('index'))
+    return HttpResponseRedirect(reverse('home'))
 
 def register(request):
 
@@ -118,5 +118,5 @@ def user_login(request):
             return HttpResponse("Invalid login entered")
 
     else:
-        #username or password are empty, redirect to the same page to login again.
+        #username or password are empty, redirect to the same page to retry.
         return render(request, 'login_app/login.html', {})

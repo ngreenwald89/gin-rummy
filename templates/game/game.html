@@ -1,23 +1,21 @@
-<!--TEMPLATE NOT IN USE RIGHT NOW-->
+<<<<<<< HEAD
 {% extends "login_app/base.html" %}
 {% block body_block %}
-    <div class="container">
-    <div class="jumbotron">
-      {% if your_turn %}
-        <h2>Go ahead and register below !</h2>
 
-        <form enctype="multipart/form-data" method="POST">
-          {% csrf_token %}
-          {{ user_form.as_p }}
-          {{ profile_form.as_p }}
-          <input type="submit" name="" value="Select">
-        </form>
-      {% else %}
-        <h1>Not Your Turn</h1>
-      {% endif %}
-
-    </div>
-
+<div class="container">
+  <div class="jumbotron">
+    <h1>Hello! {{user_name }}</h1>
+    <!--{% if user.is_authenticated %}-->
+        <!--<h2>Welcome {{ user.username }}!</h2>-->
+    <!--{% else %}-->
+        <h3>To get started with Gin Rummy,
+            <ul>
+                <li>Go ahead and register yourself first.</li>
+                <li>If already registered, login and continue. Have a good game!</li>
+            </ul>
+        </h3>
+    <!--{% endif %}-->
   </div>
+</div>
 
 {% endblock %}
