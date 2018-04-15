@@ -51,7 +51,7 @@ class Card(object):
         :param rank: 
         :return: 
         """
-        if type(rank) == int and rank > 0 and rank < 14:
+        if all([type(rank) == int, rank > 0, rank < 14]):
             return rank
 
         return f'invalid rank: {rank}'
@@ -89,7 +89,6 @@ def string_to_card(num_string):
     return Card(suit=REVERSE_SUIT_VAL[suit], rank=rank)
 
 
-
 class Deck(object):
     def __init__(self):
         self.deck = self.initialize_deck()
@@ -120,70 +119,33 @@ class Deck(object):
         return f'deck with {self.cards_remaining()} cards remaining'
 
 
-
-class Player(object):
-    def __init__(self, name='defaultPlayer'):
-        self.name = name
-        self.hand = []
-
-    def __str__(self):
-        return f'Player: {self.name}'
-
-    def __repr__(self):
-        return f'Player: {self.name}'
-
-
-class Game(object):
-    def __init__(self, player1, player2):
-
-        self.deck = Deck()
-        self.player1 = player1
-        self.player2 = player2
-        self.game_over = False
-
-        self.start_game_deal()
-        self.current_card = self.deal_from_deck()
-        self.turn = random.choice([self.player1, self.player2])
-
-    def start_game_deal(self):
-        """
-        distribute cards to players at start of game
-        :return: 
-        """
-        for i in range(10):
-            self.player1.hand.append(self.deal_from_deck())
-            self.player2.hand.append(self.deal_from_deck())
-
-    def deal_from_deck(self):
-        if self.deck:
-            return self.deck.deal()
-
-        return "No cards left in Deck"
-
-    def is_game_over(self):
-        """
-        check if player has Gin
-        :return: 
-        """
-
-
 def validate_meld(cards):
     """
 
-    :param cards: 
+    :param cards: list of Card objects
     :return: Boolean
     """
     return validate_same_rank(cards) or validate_run(cards)
 
 
 def validate_same_rank(cards):
+    """
+    validate 3 of a kind or 4 of a kind
+    :param cards: list of Card objects
+    :return: Boolean
+    """
     if len(cards) not in (3, 4):
         return False
     return all(card.rank == cards[0].rank for card in cards)
 
 
 def validate_run(cards):
-    if len(cards) < 3:
+    """
+    a run is 3 to 10 consecutive cards of the same suit
+    :param cards: list of Card objects
+    :return: Boolean 
+    """
+    if len(cards) < 3 or len(cards) > 10:
         return False
     if not all(card.suit == cards[0].suit for card in cards):
         return False
@@ -197,4 +159,82 @@ def validate_run(cards):
 
     return True
 
-# def parse_deck(deck_string):
+
+def identify_melds(hand):
+    """
+    determine melds in a hand
+    :param hand: list of Card objects
+    :return: list of melds, which are lists of Cards
+    """
+    # determine runs
+    clubs = sorted([c for c in hand if c.suit == 'C'], key=lambda x: x.rank)
+    diamonds = sorted([c for c in hand if c.suit == 'D'], key=lambda x: x.rank)
+    hearts = sorted([c for c in hand if c.suit == 'H'], key=lambda x: x.rank)
+    spades = sorted([c for c in hand if c.suit == 'S'], key=lambda x: x.rank)
+
+    # runs
+    club_runs = identify_runs(clubs)
+    diamond_runs = identify_runs(diamonds)
+    heart_runs = identify_runs(hearts)
+    spade_runs = identify_runs(spades)
+
+    runs = club_runs + diamond_runs + heart_runs + spade_runs
+    sets = identify_sets(hand)
+
+    return runs + sets
+
+
+def identify_runs(cards):
+    run = []
+    runs = [run]
+    expect = None
+    for card in cards:
+        if (card.rank == expect) or (expect is None):
+            run.append(card)
+        else:
+            run = [card]
+            runs.append(run)
+        expect = card.rank + 1
+
+    return list(filter(lambda run: len(run) >= 3, runs))
+
+
+def identify_sets(cards):
+    sets = []
+    for i in range(1, 14):
+        same_rank = list(filter(lambda x: x.rank == i, cards))
+        if len(same_rank) in (3, 4):
+            sets.append(same_rank)
+
+    return sets
+
+
+def string_to_cards(card_string):
+    """
+    convert deck field in from db string to list of Card objects
+    :param card_string: n1,n2, ...
+    :return: [Card1, Card2, ...]
+    """
+    return list(map(string_to_card, card_string.split(',')))
+
+
+def cards_to_string(cards):
+    """
+    convert list of Card objects to string for db deck field
+    :param cards: 
+    :return: 
+    """
+    return ','.join(map(lambda x: str(x.as_number()), cards))
+
+
+def sort_cards(cards):
+    return sorted(cards, key=lambda card: (card.suit, card.rank))
+
+if __name__ == '__main__':
+    d = Deck()
+    hand = []
+    for i in range(10):
+        hand.append(d.deck.pop())
+
+    identify_melds(hand)
+

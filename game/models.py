@@ -1,17 +1,22 @@
 from django.db import models
 
-from login_app.models import UserProfileModel
 from django.contrib.auth.models import User
+from game.rummy_utils import identify_melds, string_to_cards
 # Create your models here.
 
 
 class RummyPlayer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     hand = models.TextField()
-    # hand = HandField()
 
     def __str__(self):
         return self.user.username
+
+    def identify_melds(self):
+        return identify_melds(self.string_to_hand())
+
+    def string_to_hand(self):
+        return string_to_cards(self.hand)
 
 
 class RummyGame(models.Model):
@@ -21,5 +26,4 @@ class RummyGame(models.Model):
     winner = models.ForeignKey(RummyPlayer, related_name='winner', on_delete=models.CASCADE, null=True)
     turn = models.ForeignKey(RummyPlayer, related_name='turn', on_delete=models.CASCADE)
     current_card = models.TextField()
-    # deck = DeckField()
     deck = models.TextField()
