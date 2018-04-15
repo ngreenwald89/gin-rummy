@@ -11,7 +11,10 @@ from game.rummy_utils import *
 
 def start(request):
     """
-    being used - has django classes
+    this starts a game, initializing a deck, adding players to a game, dealing them cards, and starting a turn.
+    
+    at the moment, it statically picks two players from the User table
+    it needs to be configured to pick the player who has just signed in
     :param request: 
     :return: 
     """
@@ -22,27 +25,20 @@ def start(request):
     player2 = RummyPlayer(user=users[1])
     hand1 = cards_to_string([deck.pop() for i in range(10)])
     hand2 = cards_to_string([deck.pop() for i in range(10)])
-    # hand1 = ','.join([str(deck.pop().as_number()) for i in range(10)])
-    # hand2 = ','.join([str(deck.pop().as_number()) for i in range(10)])
     player1.hand = hand1
     player2.hand = hand2
     player1.save()
     player2.save()
 
     current_card = deck.pop().card_to_string()
-    game = RummyGame(player1=player1, player2=player2, turn=player1, deck=cards_to_string(deck))
+    # first turn should be randomized
+    first_turn = random.choice([player1, player2])
+    game = RummyGame(player1=player1, player2=player2, turn=first_turn, deck=cards_to_string(deck))
     game.current_card = current_card
     game.save()
     request.session['game_pk'] = game.pk
     print(game.pk)
 
-    # render function that makes use of the new game.html page created !!
-
-    # return HttpResponse(f"""
-    #                         {game.turn}'s turn,
-    #                         current showing card: {game.current_card}.
-    #                         {game.turn}'s cards: {game.turn.hand}
-    #                         """)
     return HttpResponseRedirect('/game/turn/')
 
 
