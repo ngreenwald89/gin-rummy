@@ -179,14 +179,7 @@ def identify_melds(hand):
     spade_runs = identify_runs(spades)
 
     runs = club_runs + diamond_runs + heart_runs + spade_runs
-
-    print(f'hand: {hand}')
-    for run in runs:
-        print(f'run: {run}')
-
     sets = identify_sets(hand)
-    for s in sets:
-        print(f'set: {s}')
 
     return runs + sets
 

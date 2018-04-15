@@ -1,6 +1,10 @@
 {% extends "game/base.html" %}
 {% block turn_block %}
   <div class="turn_container">
+    {% if gin_message %}
+      <h5> {{ turn }} does not have gin. Pick another option. </h5>
+    {% endif %}
+
     {% block turn_options_form %}
         {% if turn_options_form %}
             <form action="{% url 'game:turn' %}" method="post">

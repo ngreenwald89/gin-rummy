@@ -39,6 +39,24 @@ def start(request):
     return HttpResponseRedirect('/game/turn/')
 
 
+def gameover(request):
+    """
+    redirected here only if player has won (or i guess if we run out of cards?)
+    :param request: 
+    :return: 
+    """
+    game_pk = request.session.get('game_pk')
+    game = RummyGame.objects.get(pk=game_pk)
+    context = dict()
+    context['winner'] = game.winner
+    context['turn'] = game.turn
+    context['current_card'] = string_to_card(game.current_card)
+    context['hand'] = sort_cards(string_to_cards(game.turn.hand))
+    context['melds'] = game.turn.identify_melds()
+
+    return render(request, 'game/gameover.html', context)
+
+
 def turn(request):
     """
     
@@ -49,12 +67,20 @@ def turn(request):
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
 
+    player_does_not_have_gin_message = False
+
     if request.method == 'POST':
         form = TurnForm(request.POST)
         if form.is_valid():
             choice = form.cleaned_data['turn_choices']
-            handle_turn_choice(choice, game)
-            return HttpResponseRedirect('/game/discard/')
+            r = handle_turn_choice(choice, game)
+            if choice in ('current_card', 'top_of_deck_card'):
+                return HttpResponseRedirect('/game/discard/')
+            elif choice == 'declare_gin':
+                if r:
+                    return HttpResponseRedirect('/game/gameover/')
+                else:
+                    player_does_not_have_gin_message = True
     else:
         form = TurnForm()
 
@@ -64,6 +90,7 @@ def turn(request):
     context['hand'] = sort_cards(string_to_cards(game.turn.hand))
     context['melds'] = game.turn.identify_melds()
     context['turn_options_form'] = form
+    context['gin_message'] = player_does_not_have_gin_message
 
     return render(request, 'game/turn.html', context)
 
@@ -149,7 +176,7 @@ def initialize_deck():
 def handle_turn_choice(choice, game):
 
     rp = RummyPlayer.objects.get(id=game.turn.id)
-    hand = string_to_cards(game.turn.hand)
+    hand = game.turn.string_to_hand()
     deck = string_to_cards(game.deck)
 
     if choice == 'top_of_deck_card':
@@ -173,5 +200,23 @@ def handle_turn_choice(choice, game):
 
     elif choice == 'declare_gin':
         # determine if hand has gin: all cards in melds
+        set1 = set([c.as_number() for c in hand])
+        set2 = set([card.as_number() for meld in game.turn.identify_melds() for card in meld])
+        melds = game.turn.identify_melds()
 
-        pass
+        if set1 == set2:
+            # need additional checks - make sure melds are not overlapping
+            # s = set()
+            # for meld in melds:
+            #     for c in meld:
+            #         if c in s:
+            #             print('overlap')
+            #         s.add(c)
+
+            game.winner = game.turn
+            game.save()
+            print(f'{game.turn} is the Winner!!')
+            return True
+        else:
+            print(f'{game.turn} is not the winner, keep playing')
+            return False
