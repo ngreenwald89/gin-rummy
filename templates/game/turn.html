@@ -5,12 +5,12 @@
       <h5> {{ turn }} does not have gin. Pick another option. </h5>
     {% endif %}
 
-    {% block turn_options_form %}
-        {% if turn_options_form %}
+    {% block gameplay_form %}
+        {% if gameplay_form %}
             <form action="{% url 'game:turn' %}" method="post">
                 <h4>Your Turn Options:</h4>
                 {% csrf_token %}
-                {% for choice in turn_options_form %}
+                {% for choice in gameplay_form %}
                     {{ choice }}
                 {% endfor %}
                 <input type="submit" value="Select" />

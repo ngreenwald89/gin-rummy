@@ -2,7 +2,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-from game.rummy_utils import identify_melds, string_to_cards
+from game.rummy_utils import identify_melds, string_to_cards, string_to_card
 # Create your models here.
 
 
@@ -26,5 +26,31 @@ class RummyGame(models.Model):
     player2 = models.ForeignKey(RummyPlayer, related_name='player2', on_delete=models.CASCADE)
     winner = models.ForeignKey(RummyPlayer, related_name='winner', on_delete=models.CASCADE, null=True)
     turn = models.ForeignKey(RummyPlayer, related_name='turn', on_delete=models.CASCADE)
-    current_card = models.TextField()
-    deck = models.TextField()
+    current_card = models.TextField(default='')
+    deck = models.TextField(default='')
+    melds = models.TextField(default='')
+
+    def meld_string_to_melds(self):
+        """
+        store melds as string: 
+            each meld separated by |
+            each card in a meld separated by ,
+        :return: 
+        """
+        return list(map(string_to_cards, self.melds.split('|')))
+
+    def deck_string_to_deck(self):
+        return string_to_cards(self.deck)
+
+    def current_card_string_to_card(self):
+        return string_to_card(self.current_card)
+
+    def append_meld(self, meld):
+        """
+        append a meld string to current meld string
+        :param meld: already in string format (not a list of Card objects)
+        :return: 
+        """
+        melds = self.melds.split('|')
+        melds.append(meld)
+        self.melds = '|'.join(melds)
