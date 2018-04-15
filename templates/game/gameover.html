@@ -1,0 +1,12 @@
+{% extends "game/base.html" %}
+{% block turn_block %}
+    <div class="turn_container">
+        {% if winner %}
+            <h1> {{ turn }} has won!!!</h1>
+        {% else %}
+            <h1> gameover, no winner</h1>
+        {% endif%}
+    </div>
+
+
+{% endblock %}
