@@ -119,6 +119,17 @@ class Deck(object):
         return f'deck with {self.cards_remaining()} cards remaining'
 
 
+def initialize_deck():
+    deck = []
+    for suit in ('C', 'S', 'H', 'D'):
+        for rank in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13):
+            deck.append(Card(suit=suit, rank=rank))
+
+    random.shuffle(deck)
+
+    return deck
+
+
 def validate_meld(cards):
     """
 
@@ -215,7 +226,9 @@ def string_to_cards(card_string):
     :param card_string: n1,n2, ...
     :return: [Card1, Card2, ...]
     """
-    return list(map(string_to_card, card_string.split(',')))
+    if card_string:
+        return list(map(string_to_card, card_string.split(',')))
+    return []
 
 
 def cards_to_string(cards):
