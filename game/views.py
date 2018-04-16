@@ -75,16 +75,20 @@ def draw(request):
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
 
+    invalid_message = None
+
     if request.method == 'POST':
         form = DrawForm(request.POST)
         if form.is_valid():
             choice = form.cleaned_data['draw_choices']
             handle_draw_choice(choice, game)
             return HttpResponseRedirect('/game/meld_options/')
+        else:
+            invalid_message = 'Invalid Draw Option'
     else:
         form = DrawForm()
 
-    context = default_turn_context(game, form)
+    context = default_turn_context(game, form, invalid_message)
 
     return render(request, 'game/draw.html', context)
 
@@ -98,6 +102,8 @@ def meld_options(request):
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
 
+    invalid_message = None
+
     if request.method == 'POST':
         form = MeldForm(request.POST)
         if form.is_valid():
@@ -110,10 +116,11 @@ def meld_options(request):
                 return HttpResponseRedirect('/game/discard/')
         else:
             print('invalid form')
+            invalid_message = 'Invalid Choice'
     else:
         form = MeldForm()
 
-    context = default_turn_context(game, form)
+    context = default_turn_context(game, form, invalid_message)
 
     return render(request, 'game/meld_options.html', context)
 
@@ -131,6 +138,8 @@ def discard(request):
     hand = game.turn.string_to_hand()
     # for discard_form, discard choices come from current hand. Pairs of cards with (model_value, display_value)
     list_of_cards = [(card.card_to_string(), str(card)) for card in hand]
+
+    invalid_message = None
 
     if request.method == 'POST':
         form = DiscardForm(list_of_cards=list_of_cards, data=request.POST or None)
@@ -152,10 +161,11 @@ def discard(request):
             return HttpResponseRedirect('/game/draw/')
         else:
             print('invalid discard post')
+            invalid_message = 'Invalid Discard Choice'
     else:
         form = DiscardForm(list_of_cards=list_of_cards)
 
-    context = default_turn_context(game, form)
+    context = default_turn_context(game, form, invalid_message)
 
     return render(request, 'game/discard.html', context)
 
@@ -223,11 +233,11 @@ def play_meld(request):
     hand = game.turn.string_to_hand()
     # for play_meld_form, meld choices come from current hand. Pairs of cards with (model_value, display_value)
     list_of_cards = [(card.card_to_string(), str(card)) for card in hand]
+    invalid_message = None
 
     if request.method == 'POST':
         form = PlayMeldForm(list_of_cards=list_of_cards, data=request.POST or None)
-        form_is_valid = form.is_valid()
-        if form_is_valid:
+        if form.is_valid():
             print('valid play_meld post')
             print(form.cleaned_data['cards'])  # returns list of cards as number values: ['45', '46', '47'] for 6,7,8 of Spades
             selected_cards = list(map(string_to_card, form.cleaned_data['cards']))
@@ -248,16 +258,18 @@ def play_meld(request):
                 game.save()
 
             else:
-                # if selected cards invalid, reload play_meld page
+                # if selected cards invalid, reload meld_options page
                 return HttpResponseRedirect('/game/meld_options/')
 
             return HttpResponseRedirect('/game/discard/')
+
         else:
-            print('invalid play_meld post')
+            invalid_message = 'invalid play_meld Choice'
+
     else:
         form = PlayMeldForm(list_of_cards=list_of_cards)
 
-    context = default_turn_context(game, form)
+    context = default_turn_context(game, form, invalid_message)
 
     return render(request, 'game/play_meld.html', context)
 
@@ -265,7 +277,7 @@ def play_meld(request):
 def lay_off(request):
     """
     player will select cards to play on a meld
-        must select meld on board to play on?
+        must select meld on board to play on
         then select cards to play from his hand
     :param request: 
     :return: 
@@ -276,18 +288,17 @@ def lay_off(request):
     hand = game.turn.string_to_hand()
     melds = game.meld_string_to_melds()
     # melds = [[card1, card2, card3], [card5, card6, card7]]
-    # melds for form should list of melds, each meld one string of cards
+    # melds for form should be list of melds, each meld one string of cards
     list_of_melds = []
     for meld in melds:
         meld_string = ', '.join(str(card) for card in meld)
-        meld_nums = ','.join(str(card.as_number()) for card in meld)
+        meld_nums = ','.join(card.card_to_string() for card in meld)
         list_of_melds.append((meld_nums, meld_string))
     list_of_cards = [(card.card_to_string(), str(card)) for card in hand]
 
     if request.method == 'POST':
         form = ChooseMeldForm(list_of_melds=list_of_melds, list_of_cards=list_of_cards, data=request.POST or None)
-        form_is_valid = form.is_valid()
-        if form_is_valid:
+        if form.is_valid():
             selected_meld = string_to_cards(form.cleaned_data['melds'])
             selected_cards = list(map(string_to_card, form.cleaned_data['cards']))
             lay_off = selected_meld + selected_cards
@@ -324,7 +335,7 @@ def lay_off(request):
     return render(request, 'game/lay_off.html', context)
 
 
-def default_turn_context(game, form=None):
+def default_turn_context(game, form=None, invalid_message=None):
 
     context = dict()
     context['turn'] = game.turn
@@ -333,5 +344,8 @@ def default_turn_context(game, form=None):
     context['possible_melds'] = game.turn.identify_melds()
     context['played_melds'] = game.meld_string_to_melds()
     context['gameplay_form'] = form
+
+    if invalid_message:
+        context['invalid_message'] = invalid_message
 
     return context

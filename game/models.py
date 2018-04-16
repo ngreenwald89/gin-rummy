@@ -61,3 +61,9 @@ class RummyGame(models.Model):
         melds.remove(meld)
         self.melds = '|'.join(melds)
         self.save()
+
+    def is_winner(self):
+        if self.turn.hand:
+            return False
+        else:
+            return True
