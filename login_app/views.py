@@ -51,25 +51,7 @@ def register(request):
             # Update with Hashed password
             user.save()
 
-            # Now we deal with the extra info!
-
-            # Can't commit yet because we still need to manipulate
-            # profile = profile_form.save(commit=False)
-
-            # Set One to One relationship between
-            # UserForm and UserProfileInfoForm
-            # profile.user = user
-
-            # Check if they provided a profile picture
-            # if 'profile_pic' in request.FILES:
-            #     print('found it')
-            #     # If yes, then grab it from the POST form reply
-            #     profile.profile_pic = request.FILES['profile_pic']
-
-            # Now save model
-            # profile.save()
-
-            # Registration Successful!
+           # Registration Successful!
             registered = True
 
         else:

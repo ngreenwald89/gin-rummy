@@ -3,7 +3,15 @@ from django.contrib.auth.models import User
 from django.db import models
 
 from game.rummy_utils import identify_melds, string_to_cards
+
+
 # Create your models here.
+
+
+class Token(models.Model):
+    id = models.AutoField(primary_key=True)
+    state = models.IntegerField()
+    # isInUse = models.BooleanField()
 
 
 class RummyPlayer(models.Model):

@@ -1,12 +1,15 @@
+import time
+
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 
-# Create your views here.
-
 from game.forms import DiscardForm, TurnForm
-from game.models import RummyGame, RummyPlayer
+from game.models import RummyGame, RummyPlayer, Token
 from game.rummy_utils import *
+
+
+# Create your views here.
 
 
 def start(request):
@@ -15,7 +18,49 @@ def start(request):
     :param request: 
     :return: 
     """
+    context = dict()
+    # context[''] =
+
+    #     return render(request, 'game/turn.html', context)
+
+        # time.sleep(30)   # delays for 5 seconds. You can Also Use Float Value.
+
+    tokensCount = len(Token.objects.all())
+    if (tokensCount<=50):
+        for i in range(50):
+            token = Token(state=0)
+            token.save()
+
+    tokens = Token.objects.all()
+
+    for token in tokens:
+        if token.id == 0:
+            token.id = 1
+            time.sleep(30)
+            if token.id == 2:
+                request.session['game_pk'] = token.id
+                return HttpResponseRedirect('/game/startgame/')
+            else:
+                token.id = 0
+                # redirect to an error page saying that no one has joined the game,so couldn't play the game
+                context = dict()
+                return render(request, 'game/gameover.html', context)
+
+        elif id == 1:
+            token.id = 2
+            request.session['game_pk'] = token.id
+            return HttpResponseRedirect('/game/startgame/')
+        else:
+            continue
+
+
+
+    # return HttpResponseRedirect('/game/startgame/')
+
+def startgame(request):
     deck = initialize_deck()
+
+    # print(dir(request.user.get_username))
 
     users = User.objects.all()
     player1 = RummyPlayer(user=users[0])
@@ -34,7 +79,6 @@ def start(request):
     game.current_card = current_card
     game.save()
     request.session['game_pk'] = game.pk
-    print(game.pk)
 
     # render function that makes use of the new game.html page created !!
 
