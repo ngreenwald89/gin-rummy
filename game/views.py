@@ -39,7 +39,7 @@ def start(request):
     request.session['game_pk'] = game.pk
     print(game.pk)
 
-    return HttpResponseRedirect('/game/turn/')
+    return HttpResponseRedirect('/game/draw/')
 
 
 def gameover(request):
@@ -58,7 +58,7 @@ def gameover(request):
     return render(request, 'game/gameover.html', context)
 
 
-def turn(request):
+def draw(request):
     """
     https://www.thespruce.com/rummy-card-game-rules-and-strategies-411141
     On each turn, players must follow this sequence:
@@ -80,22 +80,21 @@ def turn(request):
         if form.is_valid():
             choice = form.cleaned_data['draw_choices']
             handle_draw_choice(choice, game)
-            return HttpResponseRedirect('/game/melds/')
+            return HttpResponseRedirect('/game/meld_options/')
     else:
         form = DrawForm()
 
     context = default_turn_context(game, form)
 
-    return render(request, 'game/turn.html', context)
+    return render(request, 'game/draw.html', context)
 
 
-def melds(request):
+def meld_options(request):
     """
     (2) The player may (but does not have to) play a meld of cards (see "Melds" below) or add to another player's meld (see "Laying Off" below).
     :param request: 
     :return: 
     """
-    print(f'in melds, req method: {request.method}')
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
 
@@ -103,12 +102,10 @@ def melds(request):
         form = MeldForm(request.POST)
         if form.is_valid():
             choice = form.cleaned_data['meld_choices']
-            print(f'meld_choice: {choice}')
             if choice == 'play_meld':
                 return HttpResponseRedirect('/game/play_meld/')
             elif choice == 'lay_off':
-                return HttpResponseRedirect('/game/choose_meld/')
-                # return HttpResponseRedirect('/game/lay_off/')
+                return HttpResponseRedirect('/game/lay_off/')
             elif choice == 'continue_to_discard':
                 return HttpResponseRedirect('/game/discard/')
         else:
@@ -118,7 +115,7 @@ def melds(request):
 
     context = default_turn_context(game, form)
 
-    return render(request, 'game/melds.html', context)
+    return render(request, 'game/meld_options.html', context)
 
 
 def discard(request):
@@ -152,7 +149,7 @@ def discard(request):
                 print('game turn comparison failed')
             game.save()
             print(f'after discard save {game.turn}')
-            return HttpResponseRedirect('/game/turn/')
+            return HttpResponseRedirect('/game/draw/')
         else:
             print('invalid discard post')
     else:
@@ -252,7 +249,7 @@ def play_meld(request):
 
             else:
                 # if selected cards invalid, reload play_meld page
-                return HttpResponseRedirect('/game/play_meld/')
+                return HttpResponseRedirect('/game/meld_options/')
 
             return HttpResponseRedirect('/game/discard/')
         else:
@@ -265,7 +262,7 @@ def play_meld(request):
     return render(request, 'game/play_meld.html', context)
 
 
-def choose_meld(request):
+def lay_off(request):
     """
     player will select cards to play on a meld
         must select meld on board to play on?
@@ -273,7 +270,6 @@ def choose_meld(request):
     :param request: 
     :return: 
     """
-    print('in choose_meld')
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
 
@@ -286,19 +282,16 @@ def choose_meld(request):
         meld_string = ', '.join(str(card) for card in meld)
         meld_nums = ','.join(str(card.as_number()) for card in meld)
         list_of_melds.append((meld_nums, meld_string))
-    print(list_of_melds)
     list_of_cards = [(card.card_to_string(), str(card)) for card in hand]
 
     if request.method == 'POST':
         form = ChooseMeldForm(list_of_melds=list_of_melds, list_of_cards=list_of_cards, data=request.POST or None)
         form_is_valid = form.is_valid()
         if form_is_valid:
-            print('valid choose_meld post')
-            print(form.cleaned_data['melds'])
             selected_meld = string_to_cards(form.cleaned_data['melds'])
-            print(form.cleaned_data['cards'])
             selected_cards = list(map(string_to_card, form.cleaned_data['cards']))
             lay_off = selected_meld + selected_cards
+
             if validate_meld(lay_off):
 
                 # 1. remove cards from hand
@@ -315,20 +308,20 @@ def choose_meld(request):
                 new_meld = cards_to_string(lay_off)
                 game.append_meld(new_meld)
                 game.save()
-                # remove_hand_and_include_in_meld(lay_off, hand, game)
+
                 return HttpResponseRedirect('/game/discard/')
 
             else:
                 # if selected cards invalid, reload play_meld page
                 print(f'invalid_meld: {lay_off}')
-                return HttpResponseRedirect('/game/choose_meld/')
+                return HttpResponseRedirect('/game/meld_options/')
 
     else:
         form = ChooseMeldForm(list_of_melds=list_of_melds, list_of_cards=list_of_cards)
 
     context = default_turn_context(game, form)
 
-    return render(request, 'game/choose_meld.html', context)
+    return render(request, 'game/lay_off.html', context)
 
 
 def default_turn_context(game, form=None):
@@ -342,28 +335,3 @@ def default_turn_context(game, form=None):
     context['gameplay_form'] = form
 
     return context
-
-
-def remove_hand_and_include_in_meld(selected_cards, hand, game):
-    """
-    
-    :param selected_cards: 
-    :param hand: 
-    :param game: 
-    :return: 
-    """
-
-    # 1. remove cards from hand
-    for c in selected_cards:
-        hand.remove(c)
-
-    rp = RummyPlayer.objects.get(id=game.turn.id)
-    rp.hand = cards_to_string(hand)
-    rp.save()
-
-    # 2. add cards to melds
-    game.turn.hand = rp.hand
-    meld = cards_to_string(selected_cards)
-    game.append_meld(meld)
-    game.save()
-    return
