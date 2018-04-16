@@ -2,10 +2,11 @@
 {% block body_block %}
   <div class="container">
     <div class="jumbotron">
+        <h3>Played Melds: {{ played_melds }}</h3>
         <h3>Deck Card: {{ current_card }}</h3>
         <h1>Turn: {{ turn }}</h1>
         <h4>Hand: {{ hand }}</h4>
-        <h3>Melds: {{ melds }}</h3>
+        <h3>Possible Melds: {{ possible_melds }}</h3>
     </div>
     <div class="turn_container">
         {% block turn_block %}
