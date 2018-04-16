@@ -54,3 +54,10 @@ class RummyGame(models.Model):
         melds = self.melds.split('|')
         melds.append(meld)
         self.melds = '|'.join(melds)
+        self.save()
+
+    def remove_meld(self, meld):
+        melds = self.melds.split('|')
+        melds.remove(meld)
+        self.melds = '|'.join(melds)
+        self.save()

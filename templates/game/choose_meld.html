@@ -3,7 +3,7 @@
     <div class="turn_container">
         {% block gameplay_form %}
             {% if gameplay_form %}
-                <form action="{% url 'game:melds' %}" method="post">
+                <form action="{% url 'game:choose_meld' %}" method="post">
                     <h4>Options:</h4>
                     {% csrf_token %}
                     {% for choice in gameplay_form %}

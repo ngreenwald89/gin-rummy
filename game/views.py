@@ -4,7 +4,7 @@ from django.shortcuts import render
 
 # Create your views here.
 
-from game.forms import DiscardForm, MeldForm, DrawForm, PlayMeldForm
+from game.forms import DiscardForm, MeldForm, DrawForm, PlayMeldForm, ChooseMeldForm
 from game.models import RummyGame, RummyPlayer
 from game.rummy_utils import *
 
@@ -107,7 +107,8 @@ def melds(request):
             if choice == 'play_meld':
                 return HttpResponseRedirect('/game/play_meld/')
             elif choice == 'lay_off':
-                return HttpResponseRedirect('/game/lay_off/')
+                return HttpResponseRedirect('/game/choose_meld/')
+                # return HttpResponseRedirect('/game/lay_off/')
             elif choice == 'continue_to_discard':
                 return HttpResponseRedirect('/game/discard/')
         else:
@@ -140,7 +141,7 @@ def discard(request):
         if form_is_valid:
             print('valid discard post')
             choice = string_to_card(form.cleaned_data['cards'])
-            print(f'discard choice: {choice}, type: {type(choice)}')
+            print(f'discard choice: {choice}')
             game = handle_discard_choice(choice, game)
             # switch turns
             if game.turn == game.player1:
@@ -227,7 +228,6 @@ def play_meld(request):
     list_of_cards = [(card.card_to_string(), str(card)) for card in hand]
 
     if request.method == 'POST':
-        rp = RummyPlayer.objects.get(id=game.turn.id)
         form = PlayMeldForm(list_of_cards=list_of_cards, data=request.POST or None)
         form_is_valid = form.is_valid()
         if form_is_valid:
@@ -235,11 +235,15 @@ def play_meld(request):
             print(form.cleaned_data['cards'])  # returns list of cards as number values: ['45', '46', '47'] for 6,7,8 of Spades
             selected_cards = list(map(string_to_card, form.cleaned_data['cards']))
             if validate_meld(selected_cards):
+
                 # 1. remove cards from hand
                 for c in selected_cards:
                     hand.remove(c)
+
+                rp = RummyPlayer.objects.get(id=game.turn.id)
                 rp.hand = cards_to_string(hand)
                 rp.save()
+
                 # 2. add cards to melds
                 game.turn.hand = rp.hand
                 meld = cards_to_string(selected_cards)
@@ -261,6 +265,72 @@ def play_meld(request):
     return render(request, 'game/play_meld.html', context)
 
 
+def choose_meld(request):
+    """
+    player will select cards to play on a meld
+        must select meld on board to play on?
+        then select cards to play from his hand
+    :param request: 
+    :return: 
+    """
+    print('in choose_meld')
+    game_pk = request.session.get('game_pk')
+    game = RummyGame.objects.get(pk=game_pk)
+
+    hand = game.turn.string_to_hand()
+    melds = game.meld_string_to_melds()
+    # melds = [[card1, card2, card3], [card5, card6, card7]]
+    # melds for form should list of melds, each meld one string of cards
+    list_of_melds = []
+    for meld in melds:
+        meld_string = ', '.join(str(card) for card in meld)
+        meld_nums = ','.join(str(card.as_number()) for card in meld)
+        list_of_melds.append((meld_nums, meld_string))
+    print(list_of_melds)
+    list_of_cards = [(card.card_to_string(), str(card)) for card in hand]
+
+    if request.method == 'POST':
+        form = ChooseMeldForm(list_of_melds=list_of_melds, list_of_cards=list_of_cards, data=request.POST or None)
+        form_is_valid = form.is_valid()
+        if form_is_valid:
+            print('valid choose_meld post')
+            print(form.cleaned_data['melds'])
+            selected_meld = string_to_cards(form.cleaned_data['melds'])
+            print(form.cleaned_data['cards'])
+            selected_cards = list(map(string_to_card, form.cleaned_data['cards']))
+            lay_off = selected_meld + selected_cards
+            if validate_meld(lay_off):
+
+                # 1. remove cards from hand
+                for c in selected_cards:
+                    hand.remove(c)
+
+                rp = RummyPlayer.objects.get(id=game.turn.id)
+                rp.hand = cards_to_string(hand)
+                rp.save()
+
+                # 2. add cards to melds
+                game.turn.hand = rp.hand
+                game.remove_meld(form.cleaned_data['melds'])
+                new_meld = cards_to_string(lay_off)
+                game.append_meld(new_meld)
+                game.save()
+                # remove_hand_and_include_in_meld(lay_off, hand, game)
+                return HttpResponseRedirect('/game/discard/')
+
+            else:
+                # if selected cards invalid, reload play_meld page
+                print(f'invalid_meld: {lay_off}')
+                return HttpResponseRedirect('/game/choose_meld/')
+
+    else:
+        form = ChooseMeldForm(list_of_melds=list_of_melds, list_of_cards=list_of_cards)
+
+    context = default_turn_context(game, form)
+
+    return render(request, 'game/choose_meld.html', context)
+
+
 def default_turn_context(game, form=None):
 
     context = dict()
@@ -272,3 +342,28 @@ def default_turn_context(game, form=None):
     context['gameplay_form'] = form
 
     return context
+
+
+def remove_hand_and_include_in_meld(selected_cards, hand, game):
+    """
+    
+    :param selected_cards: 
+    :param hand: 
+    :param game: 
+    :return: 
+    """
+
+    # 1. remove cards from hand
+    for c in selected_cards:
+        hand.remove(c)
+
+    rp = RummyPlayer.objects.get(id=game.turn.id)
+    rp.hand = cards_to_string(hand)
+    rp.save()
+
+    # 2. add cards to melds
+    game.turn.hand = rp.hand
+    meld = cards_to_string(selected_cards)
+    game.append_meld(meld)
+    game.save()
+    return
