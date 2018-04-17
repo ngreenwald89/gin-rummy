@@ -27,6 +27,10 @@ def user_logout(request):
     # Return to homepage.
     return HttpResponseRedirect(reverse('home'))
 
+def reset_token(request):
+    pass
+
+
 def register(request):
 
     registered = False

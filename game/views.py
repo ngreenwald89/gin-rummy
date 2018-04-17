@@ -4,11 +4,12 @@ from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 
-# Create your views here.
-
 from game.forms import DiscardForm, MeldForm, DrawForm, PlayMeldForm, ChooseMeldForm
 from game.models import RummyGame, RummyPlayer, Token
 from game.rummy_utils import *
+
+
+# Create your views here.
 
 
 def start(request):
@@ -17,51 +18,88 @@ def start(request):
     :param request: 
     :return: 
     """
-    context = dict()
-    # context[''] =
 
-    #     return render(request, 'game/turn.html', context)
+    sleep_time_sec = 20
 
-        # time.sleep(30)   # delays for 5 seconds. You can Also Use Float Value.
-
+    print("\n \n Userr id is ",request.user.id)
     tokensCount = len(Token.objects.all())
-    if (tokensCount<=50):
-        for i in range(50):
+
+    # print("\n \n Tokens count \n \n", tokensCount)
+    if tokensCount < 50:
+        for idx in range(50):
             token = Token(state=0)
             token.save()
 
     tokens = Token.objects.all()
 
     for token in tokens:
-        if token.id == 0:
-            token.id = 1
-            time.sleep(30)
-            if token.id == 2:
+        print("\n \n Token id being picked is - and the token state is ", token.id, token.state)
+        if token.state == 0:
+            token.state = 1
+            token.user0 = request.user.username
+            token.save()
+            time.sleep(sleep_time_sec)
+            # game = RummyGame.objects.get(pk=game_pk)
+            token = Token.objects.get(pk=token.id)
+
+            if token.state == 2:
+                print("\n \n Token id is 2 for token id- \n", token.id)
                 request.session['game_pk'] = token.id
+                # print("In if, user1 is ", token.user1)
+                request.session['user0'] = request.user.username
+                request.session['user1'] = token.user1
                 return HttpResponseRedirect('/game/startgame/')
             else:
-                token.id = 0
-                # redirect to an error page saying that no one has joined the game,so couldn't play the game
-                context = dict()
-                return render(request, 'game/gameover.html', context)
+                print("\n \n In else - ", token.id)
 
-        elif id == 1:
-            token.id = 2
+                token.state = 0
+                token.save()
+                context = dict()
+                context['sleep_time_sec'] = sleep_time_sec
+                # redirect to an error page saying that no one has joined the game,so couldn't play the game
+                # context = dict()
+                return render(request, 'game/game_error.html',context)
+
+        elif token.state == 1:
+            # print("In elif, user0 is ", token.user0)
+            token.user1 = request.user.username
+            token.state = 2
+            token.save()
+
             request.session['game_pk'] = token.id
+            request.session['user0'] = token.user0
+            request.session['user1'] = request.user.username
             return HttpResponseRedirect('/game/startgame/')
         else:
             continue
-
-
 
     # return HttpResponseRedirect('/game/startgame/')
 
 def startgame(request):
     deck = initialize_deck()
 
-    users = User.objects.all()
-    player1 = RummyPlayer(user=users[0])
-    player2 = RummyPlayer(user=users[1])
+    # token = request.session['token']
+
+    print("\n \n In the start game !! \n \n ")
+    # request.session['user1'] = request.user.id
+
+    username0 = request.session['user0']
+    username1 = request.session['user1']
+
+    print("Usernames user0 - ", username0)
+    print("Usernames user1 - ", username1)
+
+    # print(User.objects.all().get(username0))
+    # print((User.objects.get(username=username0)))
+    # print((User.objects.get(username=username1)))
+    # print((User.objects.get(username0))[1])
+
+    # user0 = User.objects.get(username=username0)
+    # user1 = User.objects.get(username=username1)
+
+    player1 = RummyPlayer(user=User.objects.get(username=request.session['user0']))
+    player2 = RummyPlayer(user=User.objects.get(username=request.session['user1']))
+
     hand1 = cards_to_string([deck.pop() for i in range(10)])
     hand2 = cards_to_string([deck.pop() for i in range(10)])
     player1.hand = hand1
@@ -75,8 +113,10 @@ def startgame(request):
     game = RummyGame(player1=player1, player2=player2, turn=first_turn, deck=cards_to_string(deck))
     game.current_card = current_card
     game.save()
+
+    # Commented to check the functionality with token
     request.session['game_pk'] = game.pk
-    print(game.pk)
+    # print(game.pk)
 
     return HttpResponseRedirect('/game/draw/')
 

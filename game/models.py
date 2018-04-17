@@ -1,16 +1,20 @@
 # from login_app.models import UserProfileModel
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import Model
 
 from game.rummy_utils import identify_melds, string_to_cards, string_to_card
+
+
 # Create your models here.
 
 
-class Token(models.Model):
+class Token(Model):
+
     id = models.AutoField(primary_key=True)
     state = models.IntegerField()
-    # isInUse = models.BooleanField()
-
+    user0 = models.TextField()
+    user1 = models.TextField()
 
 class RummyPlayer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
