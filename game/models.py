@@ -67,3 +67,22 @@ class RummyGame(models.Model):
             return False
         else:
             return True
+
+
+class GameLog(models.Model):
+
+    game = models.ForeignKey(RummyGame, related_name='game', on_delete=models.CASCADE)
+    turn = models.ForeignKey(RummyPlayer, related_name='player', on_delete=models.CASCADE)
+    move_number = models.IntegerField()  # autoincrement?
+    draw_option = models.TextField(choices=[('top_of_deck_card', 'top_of_deck_card'), ('current_card', 'current_card')])
+    draw_card = models.TextField(default='')
+    meld_option = models.TextField(choices=[('play_meld', 'play_meld'), ('lay_off', 'lay_off'), ('continue_to_discard', 'continue_to_discard')])
+    meld_cards = models.TextField(default='')
+    discard_card = models.TextField(default='')
+
+
+class PlayerStats(models.Model):
+    game = models.ForeignKey(RummyGame, on_delete=models.CASCADE)
+    winner = models.ForeignKey(RummyPlayer, related_name='game_winner', on_delete=models.CASCADE)
+    loser = models.ForeignKey(RummyPlayer, related_name='game_loser', on_delete=models.CASCADE)
+

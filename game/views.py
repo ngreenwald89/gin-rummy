@@ -5,7 +5,7 @@ from django.shortcuts import render
 # Create your views here.
 
 from game.forms import DiscardForm, MeldForm, DrawForm, PlayMeldForm, ChooseMeldForm
-from game.models import RummyGame, RummyPlayer
+from game.models import RummyGame, RummyPlayer, GameLog
 from game.rummy_utils import *
 
 
@@ -36,6 +36,8 @@ def start(request):
     game = RummyGame(player1=player1, player2=player2, turn=first_turn, deck=cards_to_string(deck))
     game.current_card = current_card
     game.save()
+    game_log = GameLog(game=game)
+    game_log.save()
     request.session['game_pk'] = game.pk
     print(game.pk)
 
@@ -196,6 +198,7 @@ def handle_draw_choice(choice, game):
     rp = RummyPlayer.objects.get(id=game.turn.id)
     hand = game.turn.string_to_hand()
     deck = string_to_cards(game.deck)
+    game_log = GameLog.objects.get(game=game)
 
     if choice == 'top_of_deck_card':
         # add top of deck_card to hand
