@@ -64,10 +64,10 @@ class Card(object):
         return str(self.as_number())
 
     def __str__(self):
-        return f'{RANK_MAP.get(self.rank, self.rank)} of {SUIT_MAP.get(self.suit)}'
+        return f'{RANK_MAP.get(self.rank, self.rank)}-of-{SUIT_MAP.get(self.suit)}'
 
     def __repr__(self):
-        return f'{RANK_MAP.get(self.rank, self.rank)} of {SUIT_MAP.get(self.suit)}'
+        return f'{RANK_MAP.get(self.rank, self.rank)}-of-{SUIT_MAP.get(self.suit)}'
 
     def __eq__(self, other):
         return self.as_number() == other.as_number()

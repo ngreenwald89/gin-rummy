@@ -5,6 +5,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 
+from game.views import reset_token
 from login_app.forms import UserForm
 
 
@@ -22,10 +23,12 @@ def home(request):
 
 @login_required
 def user_logout(request):
-    # Log out the user.
+
+    reset_token(request)
     logout(request)
     # Return to homepage.
     return HttpResponseRedirect(reverse('home'))
+
 
 def register(request):
 
@@ -33,14 +36,9 @@ def register(request):
 
     if request.method == 'POST':
 
-        # Get info from "both" forms
-        # It appears as one form to the user on the .html page
         user_form = UserForm(data=request.POST)
-        # profile_form = UserProfileModelForm(data=request.POST)
 
-        # Check to see both forms are valid
         if user_form.is_valid():
-                # and profile_form.is_valid():
 
             # Save User Form to Database
             user = user_form.save()
@@ -51,25 +49,7 @@ def register(request):
             # Update with Hashed password
             user.save()
 
-            # Now we deal with the extra info!
-
-            # Can't commit yet because we still need to manipulate
-            # profile = profile_form.save(commit=False)
-
-            # Set One to One relationship between
-            # UserForm and UserProfileInfoForm
-            # profile.user = user
-
-            # Check if they provided a profile picture
-            # if 'profile_pic' in request.FILES:
-            #     print('found it')
-            #     # If yes, then grab it from the POST form reply
-            #     profile.profile_pic = request.FILES['profile_pic']
-
-            # Now save model
-            # profile.save()
-
-            # Registration Successful!
+           # Registration Successful!
             registered = True
 
         else:

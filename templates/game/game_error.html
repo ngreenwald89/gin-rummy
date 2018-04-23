@@ -1,0 +1,9 @@
+{% extends "login_app/base.html" %}
+{% block body_block %}
+    <div class="container">
+       <h2>Error : Couldn't start game</h2>
+       <h2>We waited for {{sleep_time_sec}} seconds for another other player to log in, but couldn't find one</h2>
+    </div>
+
+
+{% endblock %}
