@@ -60,7 +60,8 @@ def start(request):
                 reset_token(request)
                 context = dict()
                 context['sleep_time_sec'] = sleep_time_sec
-                return render(request, 'game/game_error.html',context)
+                # redirect to an error page saying that no one has joined the game,so couldn't play the game
+                return render(request, 'game/game_error.html', context)
 
         elif token.state == 1:
             # logger.info('A valid user, with user id: %s, was found waiting, joining the game with him', token.user0)
@@ -162,7 +163,7 @@ def draw(request):
     else:
         form = DrawForm()
 
-    context = default_turn_context(game, form)
+    context = default_turn_context(game, request, form)
 
     return render(request, 'game/draw.html', context)
 
@@ -191,7 +192,7 @@ def meld_options(request):
     else:
         form = MeldForm()
 
-    context = default_turn_context(game, form)
+    context = default_turn_context(game, request, form)
 
     return render(request, 'game/meld_options.html', context)
 
@@ -233,7 +234,7 @@ def discard(request):
     else:
         form = DiscardForm(list_of_cards=list_of_cards)
 
-    context = default_turn_context(game, form)
+    context = default_turn_context(game, request, form)
 
     return render(request, 'game/discard.html', context)
 
@@ -335,7 +336,7 @@ def play_meld(request):
     else:
         form = PlayMeldForm(list_of_cards=list_of_cards)
 
-    context = default_turn_context(game, form)
+    context = default_turn_context(game, request, form)
 
     return render(request, 'game/play_meld.html', context)
 
@@ -403,13 +404,23 @@ def lay_off(request):
     return render(request, 'game/lay_off.html', context)
 
 
-def default_turn_context(game, form=None):
+def default_turn_context(game, request, form=None):
+
+    if game.player1.user == request.user:
+        player = game.player1
+    elif game.player2.user == request.user:
+        player = game.player2
+    else:
+        print(f'neither user found {request.user}, {game.player1}, {game.player2}')
+
+    if player != game.turn:
+        form = None
 
     context = dict()
     context['turn'] = game.turn
     context['current_card'] = string_to_card(game.current_card)
-    context['hand'] = sort_cards(game.turn.string_to_hand())
-    context['possible_melds'] = game.turn.identify_melds()
+    context['hand'] = sort_cards(player.string_to_hand())
+    context['possible_melds'] = player.identify_melds()
     context['played_melds'] = game.meld_string_to_melds()
     context['gameplay_form'] = form
 
