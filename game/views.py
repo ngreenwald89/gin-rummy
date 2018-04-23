@@ -77,8 +77,6 @@ def draw(request):
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
 
-
-
     invalid_message = None
 
     if request.method == 'POST':
@@ -92,6 +90,7 @@ def draw(request):
                 max_move = game_logs.aggregate(Max('move_number'))['move_number__max']
                 game_log = GameLog(game=game, turn=game.turn, move_number=(max_move + 1))
             else:
+                # first move of the game
                 game_log = GameLog(game=game, turn=game.turn, move_number=1)
             print(f'game_logs: {game_logs}')
             game_log.save()
@@ -157,7 +156,6 @@ def meld_options(request):
 
             choice = form.cleaned_data['meld_choices']
             game_log = GameLog.objects.filter(game=game, turn=game.turn).latest('move_number')
-            # game_log = GameLog.objects.get()  # get max move_number
             game_log.meld_option = choice
             game_log.save()
 
