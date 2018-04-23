@@ -5,6 +5,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 
+from game.views import reset_token
 from login_app.forms import UserForm
 
 
@@ -22,13 +23,11 @@ def home(request):
 
 @login_required
 def user_logout(request):
-    # Log out the user.
+
+    reset_token(request)
     logout(request)
     # Return to homepage.
     return HttpResponseRedirect(reverse('home'))
-
-def reset_token(request):
-    pass
 
 
 def register(request):
@@ -37,14 +36,9 @@ def register(request):
 
     if request.method == 'POST':
 
-        # Get info from "both" forms
-        # It appears as one form to the user on the .html page
         user_form = UserForm(data=request.POST)
-        # profile_form = UserProfileModelForm(data=request.POST)
 
-        # Check to see both forms are valid
         if user_form.is_valid():
-                # and profile_form.is_valid():
 
             # Save User Form to Database
             user = user_form.save()

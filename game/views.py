@@ -1,3 +1,4 @@
+import logging
 import time
 
 from django.contrib.auth.models import User
@@ -8,8 +9,10 @@ from game.forms import DiscardForm, MeldForm, DrawForm, PlayMeldForm, ChooseMeld
 from game.models import RummyGame, RummyPlayer, Token
 from game.rummy_utils import *
 
-
 # Create your views here.
+
+# Get an instance of a logger
+logger = logging.getLogger('gin_rummy')
 
 
 def start(request):
@@ -21,11 +24,12 @@ def start(request):
 
     sleep_time_sec = 20
 
-    print("\n \n Userr id is ",request.user.id)
+    logger.info('User id : %s', request.user.id)
+
     tokensCount = len(Token.objects.all())
 
-    # print("\n \n Tokens count \n \n", tokensCount)
     if tokensCount < 50:
+        logger.info('The tokens were not found, creating 50 tokens - to allow for 50 simultaneous games')
         for idx in range(50):
             token = Token(state=0)
             token.save()
@@ -33,35 +37,31 @@ def start(request):
     tokens = Token.objects.all()
 
     for token in tokens:
-        print("\n \n Token id being picked is - and the token state is ", token.id, token.state)
+        logger.info("Token id being picked is: %s and the token state is: %s ", token.id, token.state)
         if token.state == 0:
             token.state = 1
             token.user0 = request.user.username
             token.save()
             time.sleep(sleep_time_sec)
-            # game = RummyGame.objects.get(pk=game_pk)
             token = Token.objects.get(pk=token.id)
 
             if token.state == 2:
-                print("\n \n Token id is 2 for token id- \n", token.id)
+                logger.info('A valid user, with user id: %s, was found waiting, joining the game with him', token.user1)
                 request.session['game_pk'] = token.id
                 # print("In if, user1 is ", token.user1)
                 request.session['user0'] = request.user.username
                 request.session['user1'] = token.user1
                 return HttpResponseRedirect('/game/startgame/')
             else:
-                print("\n \n In else - ", token.id)
+                logger.info('No valid user found, even after waiting for %s secs; throwing an error', sleep_time_sec)
 
-                token.state = 0
-                token.save()
+                reset_token(request)
                 context = dict()
                 context['sleep_time_sec'] = sleep_time_sec
-                # redirect to an error page saying that no one has joined the game,so couldn't play the game
-                # context = dict()
                 return render(request, 'game/game_error.html',context)
 
         elif token.state == 1:
-            # print("In elif, user0 is ", token.user0)
+            # logger.info('A valid user, with user id: %s, was found waiting, joining the game with him', token.user0)
             token.user1 = request.user.username
             token.state = 2
             token.save()
@@ -73,29 +73,20 @@ def start(request):
         else:
             continue
 
-    # return HttpResponseRedirect('/game/startgame/')
 
 def startgame(request):
+    """
+
+    :param request:
+    :return:
+
+    Logic that creates the game objects, associates them to the same token and starts the game
+
+    """
     deck = initialize_deck()
 
     # token = request.session['token']
 
-    print("\n \n In the start game !! \n \n ")
-    # request.session['user1'] = request.user.id
-
-    username0 = request.session['user0']
-    username1 = request.session['user1']
-
-    print("Usernames user0 - ", username0)
-    print("Usernames user1 - ", username1)
-
-    # print(User.objects.all().get(username0))
-    # print((User.objects.get(username=username0)))
-    # print((User.objects.get(username=username1)))
-    # print((User.objects.get(username0))[1])
-
-    # user0 = User.objects.get(username=username0)
-    # user1 = User.objects.get(username=username1)
 
     player1 = RummyPlayer(user=User.objects.get(username=request.session['user0']))
     player2 = RummyPlayer(user=User.objects.get(username=request.session['user1']))
@@ -118,6 +109,7 @@ def startgame(request):
     request.session['game_pk'] = game.pk
     # print(game.pk)
 
+    logger.info("Game started with the game ID: %s ",game.pk)
     return HttpResponseRedirect('/game/draw/')
 
 
@@ -127,6 +119,9 @@ def gameover(request):
     :param request: 
     :return: 
     """
+
+    reset_token(request)
+
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
     context = dict()
@@ -190,7 +185,7 @@ def meld_options(request):
             elif choice == 'continue_to_discard':
                 return HttpResponseRedirect('/game/discard/')
         else:
-            print('invalid form')
+            logger.info('invalid form')
     else:
         form = MeldForm()
 
@@ -205,7 +200,7 @@ def discard(request):
     :param request: 
     :return: 
     """
-    print('in discard')
+    logger.info('in discard')
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
 
@@ -394,7 +389,8 @@ def lay_off(request):
 
             else:
                 # if selected cards invalid, reload play_meld page
-                print(f'invalid_meld: {lay_off}')
+                logger.info(f'invalid_meld: {lay_off}')
+
                 return HttpResponseRedirect('/game/meld_options/')
 
     else:
@@ -416,3 +412,15 @@ def default_turn_context(game, form=None):
     context['gameplay_form'] = form
 
     return context
+
+
+def reset_token(request):
+
+    token = Token.objects.get(pk=request.session['game_pk'])
+
+    token.state = 0
+    token.user0 = ""
+    token.user1 = ""
+    token.save()
+
+
