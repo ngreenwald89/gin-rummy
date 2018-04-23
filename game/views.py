@@ -193,7 +193,7 @@ def meld_options(request):
     else:
         form = MeldForm()
 
-    context = default_turn_context(game, form)
+    context = default_turn_context(game, request, form)
 
     return render(request, 'game/meld_options.html', context)
 
@@ -235,7 +235,7 @@ def discard(request):
     else:
         form = DiscardForm(list_of_cards=list_of_cards)
 
-    context = default_turn_context(game, form)
+    context = default_turn_context(game, request, form)
 
     return render(request, 'game/discard.html', context)
 
@@ -337,7 +337,7 @@ def play_meld(request):
     else:
         form = PlayMeldForm(list_of_cards=list_of_cards)
 
-    context = default_turn_context(game, form)
+    context = default_turn_context(game, request, form)
 
     return render(request, 'game/play_meld.html', context)
 
@@ -399,7 +399,7 @@ def lay_off(request):
     else:
         form = ChooseMeldForm(list_of_melds=list_of_melds, list_of_cards=list_of_cards)
 
-    context = default_turn_context(game, form)
+    context = default_turn_context(game, request, form)
 
     return render(request, 'game/lay_off.html', context)
 
