@@ -38,6 +38,8 @@ def start(request):
 
     for token in tokens:
         logger.info("Token id being picked is: %s and the token state is: %s ", token.id, token.state)
+        request.session['token_id'] = token.id
+
         if token.state == 0:
             token.state = 1
             token.user0 = request.user.username
@@ -415,8 +417,8 @@ def default_turn_context(game, form=None):
 
 
 def reset_token(request):
-
-    token = Token.objects.get(pk=request.session['game_pk'])
+    token_id = request.session['token_id']
+    token = Token.objects.get(pk=token_id)
 
     token.state = 0
     token.user0 = ""
