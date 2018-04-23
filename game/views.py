@@ -1,3 +1,4 @@
+from django.db.models import Max
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
@@ -76,16 +77,25 @@ def draw(request):
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
 
-    game_log = GameLog(game=game, turn=game.turn)
-    # get max move_number for game and turn combo for GameLog, increment by 1
-    move_number = GameLog.objects.all().max('move_number') + 1
-    game_log.move_number = move_number
-    game_log.save()
+
+
     invalid_message = None
 
     if request.method == 'POST':
         form = DrawForm(request.POST)
         if form.is_valid():
+
+            game_logs = GameLog.objects.filter(game=game, turn=game.turn)
+            if game_logs:
+
+                # get max move_number for game and turn combo for GameLog, increment by 1
+                max_move = game_logs.aggregate(Max('move_number'))['move_number__max']
+                game_log = GameLog(game=game, turn=game.turn, move_number=(max_move + 1))
+            else:
+                game_log = GameLog(game=game, turn=game.turn, move_number=1)
+            print(f'game_logs: {game_logs}')
+            game_log.save()
+
             choice = form.cleaned_data['draw_choices']
             handle_draw_choice(choice, game, game_log)
             return HttpResponseRedirect('/game/meld_options/')
@@ -146,7 +156,8 @@ def meld_options(request):
         if form.is_valid():
 
             choice = form.cleaned_data['meld_choices']
-            game_log = GameLog.objects.get(game=game, turn=game.turn)  # get max move_number
+            game_log = GameLog.objects.filter(game=game, turn=game.turn).latest('move_number')
+            # game_log = GameLog.objects.get()  # get max move_number
             game_log.meld_option = choice
             game_log.save()
 
@@ -231,7 +242,7 @@ def handle_discard_choice(discard_card, game):
     game.current_card = discard_card.card_to_string()
     game.save()
 
-    game_log = GameLog.objects.get(game=game, turn=game.turn)  # get max move_number
+    game_log = GameLog.objects.filter(game=game, turn=game.turn).latest('move_number')
     game_log.discard_card = discard_card.card_to_string()
     game_log.save()
 
@@ -278,7 +289,7 @@ def play_meld(request):
                 game.append_meld(meld)
                 game.save()
 
-                game_log = GameLog.objects.get(game=game, turn=game.turn)  # get max move_number
+                game_log = GameLog.objects.filter(game=game, turn=game.turn).latest('move_number')
                 game_log.meld_cards = meld
                 game_log.save()
 
@@ -345,7 +356,7 @@ def lay_off(request):
                 game.append_meld(new_meld)
                 game.save()
 
-                game_log = GameLog.objects.get(game=game, turn=game.turn)  # get max move_number
+                game_log = GameLog.objects.filter(game=game, turn=game.turn).latest('move_number')
                 game_log.meld_cards = form.cleaned_data['cards']
                 game_log.save()
 
