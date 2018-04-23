@@ -36,8 +36,7 @@ def start(request):
     game = RummyGame(player1=player1, player2=player2, turn=first_turn, deck=cards_to_string(deck))
     game.current_card = current_card
     game.save()
-    game_log = GameLog(game=game)
-    game_log.save()
+
     request.session['game_pk'] = game.pk
     print(game.pk)
 
@@ -77,13 +76,18 @@ def draw(request):
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
 
+    game_log = GameLog(game=game, turn=game.turn)
+    # get max move_number for game and turn combo for GameLog, increment by 1
+    move_number = GameLog.objects.all().max('move_number') + 1
+    game_log.move_number = move_number
+    game_log.save()
     invalid_message = None
 
     if request.method == 'POST':
         form = DrawForm(request.POST)
         if form.is_valid():
             choice = form.cleaned_data['draw_choices']
-            handle_draw_choice(choice, game)
+            handle_draw_choice(choice, game, game_log)
             return HttpResponseRedirect('/game/meld_options/')
         else:
             invalid_message = 'Invalid Draw Option'
@@ -95,6 +99,38 @@ def draw(request):
     return render(request, 'game/draw.html', context)
 
 
+def handle_draw_choice(choice, game, game_log):
+
+    rp = RummyPlayer.objects.get(id=game.turn.id)
+    hand = game.turn.string_to_hand()
+    deck = string_to_cards(game.deck)
+    # how to get move number?
+    game_log.draw_option = choice
+
+    if choice == 'top_of_deck_card':
+        # add top of deck_card to hand
+        card = deck.pop()
+        hand.append(card)
+        rp.hand = cards_to_string(sort_cards(hand))
+        rp.save()
+        game.turn.hand = rp.hand
+        game.deck = cards_to_string(deck)
+
+    elif choice == 'current_card':
+        # add current_card to hand
+        card = string_to_card(game.current_card)
+        hand.append(card)
+        rp.hand = cards_to_string(sort_cards(hand))
+        rp.save()
+        game.turn.hand = rp.hand
+        game.current_card = deck.pop().card_to_string()
+        game.deck = cards_to_string(deck)
+
+    game.save()
+    game_log.draw_card = card.card_to_string()
+    game_log.save()
+
+
 def meld_options(request):
     """
     (2) The player may (but does not have to) play a meld of cards (see "Melds" below) or add to another player's meld (see "Laying Off" below).
@@ -103,13 +139,17 @@ def meld_options(request):
     """
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
-
     invalid_message = None
 
     if request.method == 'POST':
         form = MeldForm(request.POST)
         if form.is_valid():
+
             choice = form.cleaned_data['meld_choices']
+            game_log = GameLog.objects.get(game=game, turn=game.turn)  # get max move_number
+            game_log.meld_option = choice
+            game_log.save()
+
             if choice == 'play_meld':
                 return HttpResponseRedirect('/game/play_meld/')
             elif choice == 'lay_off':
@@ -147,6 +187,7 @@ def discard(request):
         form = DiscardForm(list_of_cards=list_of_cards, data=request.POST or None)
         form_is_valid = form.is_valid()
         if form_is_valid:
+
             print('valid discard post')
             choice = string_to_card(form.cleaned_data['cards'])
             print(f'discard choice: {choice}')
@@ -190,34 +231,11 @@ def handle_discard_choice(discard_card, game):
     game.current_card = discard_card.card_to_string()
     game.save()
 
+    game_log = GameLog.objects.get(game=game, turn=game.turn)  # get max move_number
+    game_log.discard_card = discard_card.card_to_string()
+    game_log.save()
+
     return game
-
-
-def handle_draw_choice(choice, game):
-
-    rp = RummyPlayer.objects.get(id=game.turn.id)
-    hand = game.turn.string_to_hand()
-    deck = string_to_cards(game.deck)
-    game_log = GameLog.objects.get(game=game)
-
-    if choice == 'top_of_deck_card':
-        # add top of deck_card to hand
-        hand.append(deck.pop())
-        rp.hand = cards_to_string(sort_cards(hand))
-        rp.save()
-        game.turn.hand = rp.hand
-        game.deck = cards_to_string(deck)
-        game.save()
-
-    elif choice == 'current_card':
-        # add current_card to hand
-        hand.append(string_to_card(game.current_card))
-        rp.hand = cards_to_string(sort_cards(hand))
-        rp.save()
-        game.turn.hand = rp.hand
-        game.current_card = deck.pop().card_to_string()
-        game.deck = cards_to_string(deck)
-        game.save()
 
 
 def play_meld(request):
@@ -259,6 +277,10 @@ def play_meld(request):
                 meld = cards_to_string(selected_cards)
                 game.append_meld(meld)
                 game.save()
+
+                game_log = GameLog.objects.get(game=game, turn=game.turn)  # get max move_number
+                game_log.meld_cards = meld
+                game_log.save()
 
             else:
                 # if selected cards invalid, reload meld_options page
@@ -322,6 +344,10 @@ def lay_off(request):
                 new_meld = cards_to_string(lay_off)
                 game.append_meld(new_meld)
                 game.save()
+
+                game_log = GameLog.objects.get(game=game, turn=game.turn)  # get max move_number
+                game_log.meld_cards = form.cleaned_data['cards']
+                game_log.save()
 
                 return HttpResponseRedirect('/game/discard/')
 
