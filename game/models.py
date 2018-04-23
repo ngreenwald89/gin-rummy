@@ -16,6 +16,7 @@ class Token(Model):
     user0 = models.TextField()
     user1 = models.TextField()
 
+
 class RummyPlayer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     hand = models.TextField()

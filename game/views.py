@@ -57,8 +57,7 @@ def start(request):
                 context = dict()
                 context['sleep_time_sec'] = sleep_time_sec
                 # redirect to an error page saying that no one has joined the game,so couldn't play the game
-                # context = dict()
-                return render(request, 'game/game_error.html',context)
+                return render(request, 'game/game_error.html', context)
 
         elif token.state == 1:
             # print("In elif, user0 is ", token.user0)
@@ -165,7 +164,7 @@ def draw(request):
     else:
         form = DrawForm()
 
-    context = default_turn_context(game, form)
+    context = default_turn_context(game, request, form)
 
     return render(request, 'game/draw.html', context)
 
@@ -405,13 +404,23 @@ def lay_off(request):
     return render(request, 'game/lay_off.html', context)
 
 
-def default_turn_context(game, form=None):
+def default_turn_context(game, request, form=None):
+
+    if game.player1.user == request.user:
+        player = game.player1
+    elif game.player2.user == request.user:
+        player = game.player2
+    else:
+        print(f'neither user found {request.user}, {game.player1}, {game.player2}')
+
+    if player != game.turn:
+        form = None
 
     context = dict()
     context['turn'] = game.turn
     context['current_card'] = string_to_card(game.current_card)
-    context['hand'] = sort_cards(game.turn.string_to_hand())
-    context['possible_melds'] = game.turn.identify_melds()
+    context['hand'] = sort_cards(player.string_to_hand())
+    context['possible_melds'] = player.identify_melds()
     context['played_melds'] = game.meld_string_to_melds()
     context['gameplay_form'] = form
 
