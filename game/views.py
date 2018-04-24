@@ -7,7 +7,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 
 from game.forms import DiscardForm, MeldForm, DrawForm, PlayMeldForm, ChooseMeldForm
-from game.models import RummyGame, RummyPlayer, Token, GameLog
+from game.models import RummyGame, RummyPlayer, Token, GameLog, PlayerStats
 from game.rummy_utils import *
 
 # Create your views here.
@@ -122,12 +122,10 @@ def gameover(request):
 
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
-    context = dict()
+
+    context = default_turn_context(game)
     context['winner'] = game.winner
-    context['turn'] = game.turn
-    context['current_card'] = string_to_card(game.current_card)
-    # context['hand'] = sort_cards(string_to_cards(game.turn.hand))
-    context['melds'] = game.turn.identify_melds()
+    context['loser'] = game.loser
 
     return render(request, 'game/gameover.html', context)
 
@@ -282,6 +280,8 @@ def discard(request):
                 else:
                     game.loser = game.player1
                 game.save()
+                stats = PlayerStats(game=game, winner=game.winner, loser=game.loser)
+                stats.save()
                 return HttpResponseRedirect('/game/gameover/')
 
             # switch turns
@@ -382,6 +382,9 @@ def play_meld(request):
                     else:
                         game.loser = game.player1
                     game.save()
+
+                    stats = PlayerStats(game=game, winner=game.winner, loser=game.loser)
+                    stats.save()
                     return HttpResponseRedirect('/game/gameover/')
 
             else:
@@ -458,6 +461,9 @@ def lay_off(request):
                     else:
                         game.loser = game.player1
                     game.save()
+
+                    stats = PlayerStats(game=game, winner=game.winner, loser=game.loser)
+                    stats.save()
                     return HttpResponseRedirect('/game/gameover/')
 
                 return HttpResponseRedirect('/game/discard/')
