@@ -7,7 +7,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 
 from game.forms import DiscardForm, MeldForm, DrawForm, PlayMeldForm, ChooseMeldForm
-from game.models import RummyGame, RummyPlayer, Token, GameLog
+from game.models import RummyGame, RummyPlayer, Token, GameLog, PlayerStats
 from game.rummy_utils import *
 
 # Create your views here.
@@ -87,9 +87,6 @@ def startgame(request):
     """
     deck = initialize_deck()
 
-    # token = request.session['token']
-
-
     player1 = RummyPlayer(user=User.objects.get(username=request.session['user0']))
     player2 = RummyPlayer(user=User.objects.get(username=request.session['user1']))
 
@@ -125,12 +122,10 @@ def gameover(request):
 
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
-    context = dict()
+
+    context = default_turn_context(game)
     context['winner'] = game.winner
-    context['turn'] = game.turn
-    context['current_card'] = string_to_card(game.current_card)
-    context['hand'] = sort_cards(string_to_cards(game.turn.hand))
-    context['melds'] = game.turn.identify_melds()
+    context['loser'] = game.loser
 
     return render(request, 'game/gameover.html', context)
 
@@ -273,8 +268,22 @@ def discard(request):
 
             logger.debug('valid discard post')
             choice = string_to_card(form.cleaned_data['cards'])
-            logger.info(f'discard choice: {choice}')
+            print(f'discard choice: {choice}')
             game = handle_discard_choice(choice, game)
+
+            print(game.turn.string_to_hand())
+
+            if not game.turn.hand:
+                game.winner = game.turn
+                if game.turn == game.player1:
+                    game.loser = game.player2
+                else:
+                    game.loser = game.player1
+                game.save()
+                stats = PlayerStats(game=game, winner=game.winner, loser=game.loser)
+                stats.save()
+                return HttpResponseRedirect('/game/gameover/')
+
             # switch turns
             if game.turn == game.player1:
                 game.turn = game.player2
@@ -310,6 +319,7 @@ def handle_discard_choice(discard_card, game):
     hand.remove(discard_card)
     rp.hand = cards_to_string(sort_cards(hand))
     rp.save()
+    game.turn.hand = rp.hand
 
     game.current_card = discard_card.card_to_string()
     game.save()
@@ -364,6 +374,18 @@ def play_meld(request):
                 game_log = GameLog.objects.filter(game=game, turn=game.turn).latest('move_number')
                 game_log.meld_cards = meld
                 game_log.save()
+
+                if not game.turn.hand:
+                    game.winner = game.turn
+                    if game.turn == game.player1:
+                        game.loser = game.player2
+                    else:
+                        game.loser = game.player1
+                    game.save()
+
+                    stats = PlayerStats(game=game, winner=game.winner, loser=game.loser)
+                    stats.save()
+                    return HttpResponseRedirect('/game/gameover/')
 
             else:
                 # if selected cards invalid, reload meld_options page
@@ -431,6 +453,18 @@ def lay_off(request):
                 game_log = GameLog.objects.filter(game=game, turn=game.turn).latest('move_number')
                 game_log.meld_cards = form.cleaned_data['cards']
                 game_log.save()
+
+                if not game.turn.hand:
+                    game.winner = game.turn
+                    if game.turn == game.player1:
+                        game.loser = game.player2
+                    else:
+                        game.loser = game.player1
+                    game.save()
+
+                    stats = PlayerStats(game=game, winner=game.winner, loser=game.loser)
+                    stats.save()
+                    return HttpResponseRedirect('/game/gameover/')
 
                 return HttpResponseRedirect('/game/discard/')
 
