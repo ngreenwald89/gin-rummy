@@ -19,7 +19,8 @@ TEMPLATE_DIR = os.path.join(BASE_DIR,'templates')
 STATIC_DIR = os.path.join(BASE_DIR,'static')
 MEDIA_DIR = os.path.join(BASE_DIR,'media')
 
-SECURE_SSL_REDIRECT = True
+# !!!UNCOMMENT WHEN DONE WITH DEV AND SUBMITTING!!!
+# SECURE_SSL_REDIRECT = True
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
