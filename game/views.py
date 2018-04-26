@@ -23,7 +23,7 @@ def start(request):
     :return: 
     """
 
-    sleep_time_sec = 20
+    sleep_time_sec = 5
 
     logger.info('User id : %s', request.user.id)
 
@@ -53,7 +53,7 @@ def start(request):
                 request.session['game_pk'] = token.id
                 request.session['user0'] = request.user.username
                 request.session['user1'] = token.user1
-                return HttpResponseRedirect('/game/startgame/')
+                return HttpResponseRedirect('/game/draw/')
             else:
                 logger.info('No valid user found, even after waiting for %s secs; throwing an error', sleep_time_sec)
 
@@ -100,7 +100,12 @@ def startgame(request):
     current_card = deck.pop().card_to_string()
     # first turn should be randomized
     first_turn = random.choice([player1, player2])
-    game = RummyGame(player1=player1, player2=player2, turn=first_turn, deck=cards_to_string(deck))
+    game = RummyGame(id=request.session['game_pk'],
+                     player1=player1,
+                     player2=player2,
+                     turn=first_turn,
+                     deck=cards_to_string(deck)
+                     )
     game.current_card = current_card
     game.save()
 
