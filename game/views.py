@@ -177,7 +177,7 @@ def draw(request):
     else:
         form = DrawForm()
 
-    context = default_turn_context(game, form, invalid_message)
+    context = default_turn_context(game, request, form)
 
     return render(request, 'game/draw.html', context)
 
@@ -245,7 +245,7 @@ def meld_options(request):
     else:
         form = MeldForm()
 
-    context = default_turn_context(game, form, invalid_message)
+    context = default_turn_context(game, request, form)
 
     return render(request, 'game/meld_options.html', context)
 
@@ -305,7 +305,7 @@ def discard(request):
     else:
         form = DiscardForm(list_of_cards=list_of_cards)
 
-    context = default_turn_context(game, form, invalid_message)
+    context = default_turn_context(game, request, form)
 
     return render(request, 'game/discard.html', context)
 
@@ -404,7 +404,7 @@ def play_meld(request):
     else:
         form = PlayMeldForm(list_of_cards=list_of_cards)
 
-    context = default_turn_context(game, form, invalid_message)
+    context = default_turn_context(game, request, form)
 
     return render(request, 'game/play_meld.html', context)
 
@@ -482,23 +482,30 @@ def lay_off(request):
     else:
         form = ChooseMeldForm(list_of_melds=list_of_melds, list_of_cards=list_of_cards)
 
-    context = default_turn_context(game, form)
+    context = default_turn_context(game, request, form)
 
     return render(request, 'game/lay_off.html', context)
 
 
-def default_turn_context(game, form=None, invalid_message=None):
+def default_turn_context(game, request, form=None):
+
+    if game.player1.user == request.user:
+        player = game.player1
+    elif game.player2.user == request.user:
+        player = game.player2
+    else:
+        print(f'neither user found {request.user}, {game.player1}, {game.player2}')
+
+    if player != game.turn:
+        form = None
 
     context = dict()
     context['turn'] = game.turn
     context['current_card'] = string_to_card(game.current_card)
-    context['hand'] = sort_cards(game.turn.string_to_hand())
-    context['possible_melds'] = game.turn.identify_melds()
+    context['hand'] = sort_cards(player.string_to_hand())
+    context['possible_melds'] = player.identify_melds()
     context['played_melds'] = game.meld_string_to_melds()
     context['gameplay_form'] = form
-
-    if invalid_message:
-        context['invalid_message'] = invalid_message
 
     return context
 
