@@ -42,8 +42,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 'django-session-idle-timeout',
     'login_app',
-    'game'
+    'game',
+    'session_security',
 ]
 
 MIDDLEWARE = [
@@ -52,8 +54,10 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'session_security.middleware.SessionSecurityMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'django-session-idle-timeout.middleware.SessionIdleTimeout',
 ]
 
 ROOT_URLCONF = 'gin_rummy.urls'
@@ -147,6 +151,17 @@ MEDIA_URL = '/media/'
 
 LOGIN_URL = '/login_app/user_login/'
 
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SECURITY_WARN_AFTER = 20
+SESSION_SECURITY_EXPIRE_AFTER = 30
+
+#
+# SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
+# # Time-out in seconds
+# SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# # set just 10 seconds to test
+# SESSION_COOKIE_AGE = 30
+# SESSION_SAVE_EVERY_REQUEST = True
 
 # Configuration for logging information !!
 
@@ -159,7 +174,7 @@ LOGGING = {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'simple': {
-            'format': '%(levelname)s ; %(asctime)s ; Module: %(module)s ; %(message)s'
+            'format': '%(levelname)s | %(asctime)s | Module: %(module)s | Thread: %(thread)d | %(message)s'
         },
     },
     'handlers': {

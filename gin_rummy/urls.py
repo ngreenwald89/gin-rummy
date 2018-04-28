@@ -27,6 +27,7 @@ urlpatterns = [
     path('login_app/', include('login_app.urls')),
     path('logout/', login_views.user_logout, name='logout'),
     # path('special/', login_views.special, name='special'),
+    path('session_security/', include('session_security.urls')),
     path('game/', include('game.urls')),
 
 ]
