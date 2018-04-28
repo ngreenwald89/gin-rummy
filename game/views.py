@@ -1,6 +1,7 @@
 import logging
 import time
 
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Max
 from django.http import HttpResponseRedirect
@@ -16,6 +17,7 @@ from game.rummy_utils import *
 logger = logging.getLogger('gin_rummy')
 
 
+@login_required
 def start(request):
     """
     being used - has django classes
@@ -76,6 +78,7 @@ def start(request):
             continue
 
 
+@login_required
 def startgame(request):
     """
 
@@ -116,6 +119,7 @@ def startgame(request):
     return HttpResponseRedirect('/game/draw/')
 
 
+@login_required
 def gameover(request):
     """
     redirected here only if player has won (or i guess if we run out of cards?)
@@ -135,6 +139,7 @@ def gameover(request):
     return render(request, 'game/gameover.html', context)
 
 
+@login_required
 def draw(request):
     """
     https://www.thespruce.com/rummy-card-game-rules-and-strategies-411141
@@ -217,6 +222,7 @@ def handle_draw_choice(choice, game, game_log):
     game_log.save()
 
 
+@login_required
 def meld_options(request):
     """
     (2) The player may (but does not have to) play a meld of cards (see "Melds" below) or add to another player's meld (see "Laying Off" below).
@@ -253,6 +259,7 @@ def meld_options(request):
     return render(request, 'game/meld_options.html', context)
 
 
+@login_required
 def discard(request):
     """
     discard card from hand, switch turns when done
@@ -276,10 +283,10 @@ def discard(request):
 
             logger.debug('valid discard post')
             choice = string_to_card(form.cleaned_data['cards'])
-            print(f'discard choice: {choice}')
+            logger.debug(f'discard choice: {choice}')
             game = handle_discard_choice(choice, game)
 
-            print(game.turn.string_to_hand())
+            logger.debug(game.turn.string_to_hand())
 
             if not game.turn.hand:
                 game.winner = game.turn
@@ -339,6 +346,7 @@ def handle_discard_choice(discard_card, game):
     return game
 
 
+@login_required
 def play_meld(request):
     """
     # allow player to select multiple cards from hand
@@ -412,6 +420,7 @@ def play_meld(request):
     return render(request, 'game/play_meld.html', context)
 
 
+@login_required
 def lay_off(request):
     """
     player will select cards to play on a meld
@@ -497,7 +506,7 @@ def default_turn_context(game, request, form=None):
     elif game.player2.user == request.user:
         player = game.player2
     else:
-        print(f'neither user found {request.user}, {game.player1}, {game.player2}')
+        logger.debug(f'neither user found {request.user}, {game.player1}, {game.player2}')
 
     if player != game.turn:
         form = None
