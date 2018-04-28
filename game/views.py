@@ -128,7 +128,7 @@ def gameover(request):
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
 
-    context = default_turn_context(game)
+    context = default_turn_context(game, request)
     context['winner'] = game.winner
     context['loser'] = game.loser
 
@@ -151,6 +151,9 @@ def draw(request):
 
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
+
+    if game.winner:
+        return HttpResponseRedirect('/game/gameover/')
 
     invalid_message = None
 
