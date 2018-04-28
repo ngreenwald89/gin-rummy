@@ -36,6 +36,7 @@ class RummyGame(models.Model):
     player1 = models.ForeignKey(RummyPlayer, related_name='player1', on_delete=models.CASCADE)
     player2 = models.ForeignKey(RummyPlayer, related_name='player2', on_delete=models.CASCADE)
     winner = models.ForeignKey(RummyPlayer, related_name='winner', on_delete=models.CASCADE, null=True)
+    loser = models.ForeignKey(RummyPlayer, related_name='loser', on_delete=models.CASCADE, null=True)
     turn = models.ForeignKey(RummyPlayer, related_name='turn', on_delete=models.CASCADE)
     current_card = models.TextField(default='')
     deck = models.TextField(default='')
@@ -72,3 +73,28 @@ class RummyGame(models.Model):
         melds.remove(meld)
         self.melds = '|'.join(melds)
         self.save()
+
+    # this doesn't look right
+    def is_winner(self):
+        if self.turn.hand:
+            return False
+        else:
+            return True
+
+
+class GameLog(models.Model):
+
+    game = models.ForeignKey(RummyGame, related_name='game', on_delete=models.CASCADE)
+    turn = models.ForeignKey(RummyPlayer, related_name='player', on_delete=models.CASCADE)
+    move_number = models.IntegerField()  # autoincrement?
+    draw_option = models.TextField(choices=[('top_of_deck_card', 'top_of_deck_card'), ('current_card', 'current_card')])
+    draw_card = models.TextField(default='')
+    meld_option = models.TextField(choices=[('play_meld', 'play_meld'), ('lay_off', 'lay_off'), ('continue_to_discard', 'continue_to_discard')])
+    meld_cards = models.TextField(default='')
+    discard_card = models.TextField(default='')
+
+
+class PlayerStats(models.Model):
+    game = models.ForeignKey(RummyGame, on_delete=models.CASCADE)
+    winner = models.ForeignKey(RummyPlayer, related_name='game_winner', on_delete=models.CASCADE)
+    loser = models.ForeignKey(RummyPlayer, related_name='game_loser', on_delete=models.CASCADE)
