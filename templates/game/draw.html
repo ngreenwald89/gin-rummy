@@ -12,6 +12,8 @@
                 {% endfor %}
                 <input type="submit" value="Select" />
             </form>
+        {% else %}
+            <meta http-equiv="refresh" content="5; URL={% url 'game:draw' %}">
         {% endif %}
     {% endblock %}
 
