@@ -468,7 +468,7 @@ def lay_off(request):
                 game.save()
 
                 game_log = GameLog.objects.filter(game=game, turn=game.turn).latest('move_number')
-                game_log.meld_cards = form.cleaned_data['cards']
+                game_log.meld_cards = ','.join(form.cleaned_data['cards'])
                 game_log.save()
 
                 if not game.turn.hand:
