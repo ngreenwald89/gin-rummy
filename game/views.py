@@ -1,6 +1,8 @@
 import logging
 import time
 
+from datetime import datetime, timezone
+
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Max
@@ -156,6 +158,10 @@ def draw(request):
 
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
+
+    # if datetime.datetime.now - lastMove > 2 minutes, then end game
+    if (datetime.now(timezone.utc) - game.last_updated).seconds > 120:
+        return HttpResponseRedirect('/game/gameover/')
 
     if game.winner:
         return HttpResponseRedirect('/game/gameover/')
