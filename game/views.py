@@ -463,7 +463,7 @@ def lay_off(request):
                 # 2. add cards to melds
                 game.turn.hand = rp.hand
                 game.remove_meld(form.cleaned_data['melds'])
-                new_meld = cards_to_string(lay_off)
+                new_meld = cards_to_string(sort_cards(lay_off))
                 game.append_meld(new_meld)
                 game.save()
 
