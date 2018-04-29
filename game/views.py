@@ -463,12 +463,12 @@ def lay_off(request):
                 # 2. add cards to melds
                 game.turn.hand = rp.hand
                 game.remove_meld(form.cleaned_data['melds'])
-                new_meld = cards_to_string(lay_off)
+                new_meld = cards_to_string(sort_cards(lay_off))
                 game.append_meld(new_meld)
                 game.save()
 
                 game_log = GameLog.objects.filter(game=game, turn=game.turn).latest('move_number')
-                game_log.meld_cards = form.cleaned_data['cards']
+                game_log.meld_cards = ','.join(form.cleaned_data['cards'])
                 game_log.save()
 
                 if not game.turn.hand:
@@ -532,3 +532,30 @@ def reset_token(request):
     token.save()
 
 
+@login_required
+def game_stats(request):
+    """
+    show game stats
+    1. show record for each player
+    2. show log of moves for a particular finished game
+    :param request: 
+    :return: 
+    """
+
+    print('getting to game_stats')
+
+    games = PlayerStats.objects.all()
+
+    context = dict()
+    context['games'] = games
+
+    return render(request, 'game/game_stats.html', context)
+
+
+@login_required
+def game_details(request, pk):
+    game_moves = GameLog.objects.filter(game_id=pk)
+    context = dict()
+    context['game_moves'] = game_moves
+
+    return render(request, 'game/game_details.html', context)
