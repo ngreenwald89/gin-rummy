@@ -44,6 +44,7 @@ class RummyGame(models.Model):
     deck = models.CharField(max_length=155, blank=True, null=False, default='')
     # meld max_length: 20 cards, 19 commas, 6 | for 6 separate melds = 20*2 + 19 + 6 = 65
     melds = models.CharField(max_length=65, blank=True, null=False, default='')
+    last_updated = models.DateTimeField(auto_now=True)  # this should automatically be reset every time .save() called
 
     def meld_string_to_melds(self):
         """
@@ -76,13 +77,6 @@ class RummyGame(models.Model):
         melds.remove(meld)
         self.melds = '|'.join(melds)
         self.save()
-
-    # this doesn't look right
-    def is_winner(self):
-        if self.turn.hand:
-            return False
-        else:
-            return True
 
 
 class GameLog(models.Model):
