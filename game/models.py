@@ -42,7 +42,8 @@ class RummyGame(models.Model):
     current_card = models.CharField(max_length=2, blank=True, null=False, default='')
     # deck max_length: 51 commas + 52*2 possibly two digit integers = 51 + 104 = 155
     deck = models.CharField(max_length=155, blank=True, null=False, default='')
-    melds = models.TextField(default='')
+    # meld max_length: 20 cards, 19 commas, 6 | for 6 separate melds = 20*2 + 19 + 6 = 65
+    melds = models.CharField(max_length=65, blank=True, null=False, default='')
 
     def meld_string_to_melds(self):
         """
