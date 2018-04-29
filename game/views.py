@@ -532,3 +532,30 @@ def reset_token(request):
     token.save()
 
 
+@login_required
+def game_stats(request):
+    """
+    show game stats
+    1. show record for each player
+    2. show log of moves for a particular finished game
+    :param request: 
+    :return: 
+    """
+
+    print('getting to game_stats')
+
+    games = PlayerStats.objects.all()
+
+    context = dict()
+    context['games'] = games
+
+    return render(request, 'game/game_stats.html', context)
+
+
+@login_required
+def game_details(request, pk):
+    game_moves = GameLog.objects.filter(game_id=pk)
+    context = dict()
+    context['game_moves'] = game_moves
+
+    return render(request, 'game/game_details.html', context)

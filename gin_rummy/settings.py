@@ -43,7 +43,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'django-session-idle-timeout',
     'login_app',
     'game',
     'session_security',
@@ -75,6 +74,9 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'libraries': {
+                'game_detail_tags': 'templatetags.game_detail_tags',
+            }
         },
     },
 ]
@@ -153,8 +155,8 @@ MEDIA_URL = '/media/'
 LOGIN_URL = '/login_app/user_login/'
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_SECURITY_WARN_AFTER = 20
-SESSION_SECURITY_EXPIRE_AFTER = 30
+SESSION_SECURITY_WARN_AFTER = 2000
+SESSION_SECURITY_EXPIRE_AFTER = 3000
 
 #
 # SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
