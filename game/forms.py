@@ -33,7 +33,7 @@ class ChooseMeldForm(forms.Form):
 
     def __init__(self, list_of_melds, list_of_cards, *args, **kwargs):
         super(ChooseMeldForm, self).__init__(*args, **kwargs)
-        MELD_CHOICES = [(m[0], m[1]) for m in list_of_melds]
-        CARD_CHOICES = [(c[0], c[1]) for c in list_of_cards]
-        self.fields['melds'] = forms.ChoiceField(choices=MELD_CHOICES, label='meld_choices')
-        self.fields['cards'] = forms.MultipleChoiceField(choices=CARD_CHOICES, label='card_choices')
+        meld_choices = [(m[0], m[1]) for m in list_of_melds]
+        card_choices = [(c[0], c[1]) for c in list_of_cards]
+        self.fields['melds'] = forms.ChoiceField(choices=meld_choices, label='meld_choices')
+        self.fields['cards'] = forms.MultipleChoiceField(choices=card_choices, label='card_choices')
