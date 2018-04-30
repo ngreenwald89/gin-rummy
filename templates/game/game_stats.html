@@ -1,0 +1,29 @@
+{% extends "login_app/base.html" %}
+{% block body_block %}
+  <div class="container">
+    <table class="table">
+  <thead>
+    <tr>
+      <th>Game #</th>
+      <th>Winner</th>
+      <th>Loser</th>
+      <th>Game Details</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for game in games %}
+    <tr>
+      <td> {{ game.game_id }} </td>
+      <td> {{ game.winner }} </td>
+      <td> {{ game.loser }} </td>
+      <td>
+        <a href="{% url 'game:game_details' game.game_id %}">
+          <span style="white-space: nowrap;">Details</span>
+        </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+  </div>
+{% endblock %}

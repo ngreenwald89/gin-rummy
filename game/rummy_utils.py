@@ -1,11 +1,11 @@
 import random
 
 RANK_MAP = {
-        1: 'Ace',
-        11: 'Jack',
-        12: 'Queen',
-        13: 'King'
-    }
+    1: 'Ace',
+    11: 'Jack',
+    12: 'Queen',
+    13: 'King'
+}
 
 SUIT_MAP = {
     'C': 'Clubs',
@@ -38,8 +38,8 @@ class Card(object):
 
     def validate_suit(self, suit):
         """
-        :param suit: 
-        :return: 
+        :param suit:
+        :return:
         """
         if suit in ('C', 'S', 'H', 'D'):
             return suit
@@ -48,10 +48,10 @@ class Card(object):
 
     def validate_rank(self, rank):
         """
-        :param rank: 
-        :return: 
+        :param rank:
+        :return:
         """
-        if all([type(rank) == int, rank > 0, rank < 14]):
+        if all([isinstance(rank, int), rank > 0, rank < 14]):
             return rank
 
         return f'invalid rank: {rank}'
@@ -76,8 +76,8 @@ class Card(object):
 def string_to_card(num_string):
     """
     gets number of card as stored in db as number string
-    :param num_string: 
-    :return: 
+    :param num_string:
+    :return:
     """
     num = int(num_string)
     if num % 13 == 0:
@@ -154,7 +154,7 @@ def validate_run(cards):
     """
     a run is 3 to 10 consecutive cards of the same suit
     :param cards: list of Card objects
-    :return: Boolean 
+    :return: Boolean
     """
     if len(cards) < 3 or len(cards) > 10:
         return False
@@ -234,20 +234,11 @@ def string_to_cards(card_string):
 def cards_to_string(cards):
     """
     convert list of Card objects to string for db deck field
-    :param cards: 
-    :return: 
+    :param cards:
+    :return:
     """
     return ','.join(map(lambda x: str(x.as_number()), cards))
 
 
 def sort_cards(cards):
     return sorted(cards, key=lambda card: (card.suit, card.rank))
-
-if __name__ == '__main__':
-    d = Deck()
-    hand = []
-    for i in range(10):
-        hand.append(d.deck.pop())
-
-    identify_melds(hand)
-

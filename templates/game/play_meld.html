@@ -1,9 +1,6 @@
 {% extends "game/base.html" %}
 {% block turn_block %}
     <div class="turn_container">
-        {% if invalid_message %}
-            {{ invalid_message }}
-        {% endif %}
         {% block gameplay_form %}
             {% if gameplay_form %}
                 <form action="{% url 'game:play_meld' %}" method="post">

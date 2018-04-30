@@ -1,6 +1,9 @@
 import datetime
 import logging
 import time
+import random
+
+from datetime import datetime, timezone
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -11,7 +14,7 @@ from django.shortcuts import render
 
 from game.forms import DiscardForm, MeldForm, DrawForm, PlayMeldForm, ChooseMeldForm
 from game.models import RummyGame, RummyPlayer, Token, GameLog, PlayerStats
-from game.rummy_utils import *
+from game.rummy_utils import (initialize_deck, cards_to_string, sort_cards, string_to_card, string_to_cards, validate_meld)
 
 # Create your views here.
 
@@ -102,7 +105,7 @@ def start(request):
                 reset_token(request)
                 context = dict()
                 context['sleep_time_sec'] = sleep_time_sec
-                return render(request, 'game/game_error.html',context)
+                return render(request, 'game/game_error.html', context)
 
         elif token.state == 1:
             # logger.info('A valid user, with user id: %s, was found waiting, joining the game with him', token.user0)
@@ -154,12 +157,13 @@ def startgame(request):
 
     # Create a new game, only if NO existing game is found !
 
+
     game = RummyGame(id=request.session['game_pk'],
                      player1=player1,
                      player2=player2,
                      turn=first_turn,
-                     deck=cards_to_string(deck)
-                     )
+                     deck=cards_to_string(deck))
+
     game.current_card = current_card
     game.save()
 
@@ -174,8 +178,8 @@ def startgame(request):
 def gameover(request):
     """
     redirected here only if player has won (or i guess if we run out of cards?)
-    :param request: 
-    :return: 
+    :param request:
+    :return:
     """
 
     reset_token(request)
@@ -208,10 +212,22 @@ def draw(request):
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
 
-    if game.winner:
+    # if datetime.datetime.now - lastMove > 2 minutes, then end game.
+    # Whoever's turn it is has delayed too long and is the loser
+    if (datetime.now(timezone.utc) - game.last_updated).seconds > 120:
+
+        if game.player1 == game.turn:
+            game.loser = game.player1
+            game.winner = game.player2
+
+        else:
+            game.loser = game.player2
+            game.winner = game.player1
+        game.save()
         return HttpResponseRedirect('/game/gameover/')
 
-    invalid_message = None
+    if game.winner:
+        return HttpResponseRedirect('/game/gameover/')
 
     if request.method == 'POST':
         form = DrawForm(request.POST)
@@ -231,8 +247,6 @@ def draw(request):
             choice = form.cleaned_data['draw_choices']
             handle_draw_choice(choice, game, game_log)
             return HttpResponseRedirect('/game/meld_options/')
-        else:
-            invalid_message = 'Invalid Draw Option'
     else:
         form = DrawForm()
 
@@ -282,7 +296,6 @@ def meld_options(request):
     """
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
-    invalid_message = None
 
     if request.method == 'POST':
         form = MeldForm(request.POST)
@@ -300,7 +313,6 @@ def meld_options(request):
             elif choice == 'continue_to_discard':
                 return HttpResponseRedirect('/game/discard/')
         else:
-            invalid_message = 'Invalid Choice'
             logger.info('invalid form')
     else:
         form = MeldForm()
@@ -324,8 +336,6 @@ def discard(request):
     hand = game.turn.string_to_hand()
     # for discard_form, discard choices come from current hand. Pairs of cards with (model_value, display_value)
     list_of_cards = [(card.card_to_string(), str(card)) for card in hand]
-
-    invalid_message = None
 
     if request.method == 'POST':
         form = DiscardForm(list_of_cards=list_of_cards, data=request.POST or None)
@@ -362,7 +372,6 @@ def discard(request):
             return HttpResponseRedirect('/game/draw/')
         else:
             logger.debug('invalid discard post')
-            invalid_message = 'Invalid Discard Choice'
     else:
         form = DiscardForm(list_of_cards=list_of_cards)
 
@@ -414,7 +423,6 @@ def play_meld(request):
     hand = game.turn.string_to_hand()
     # for play_meld_form, meld choices come from current hand. Pairs of cards with (model_value, display_value)
     list_of_cards = [(card.card_to_string(), str(card)) for card in hand]
-    invalid_message = None
 
     if request.method == 'POST':
         form = PlayMeldForm(list_of_cards=list_of_cards, data=request.POST or None)
@@ -459,9 +467,6 @@ def play_meld(request):
                 return HttpResponseRedirect('/game/meld_options/')
 
             return HttpResponseRedirect('/game/discard/')
-
-        else:
-            invalid_message = 'invalid play_meld Choice'
 
     else:
         form = PlayMeldForm(list_of_cards=list_of_cards)
@@ -514,12 +519,12 @@ def lay_off(request):
                 # 2. add cards to melds
                 game.turn.hand = rp.hand
                 game.remove_meld(form.cleaned_data['melds'])
-                new_meld = cards_to_string(lay_off)
+                new_meld = cards_to_string(sort_cards(lay_off))
                 game.append_meld(new_meld)
                 game.save()
 
                 game_log = GameLog.objects.filter(game=game, turn=game.turn).latest('move_number')
-                game_log.meld_cards = form.cleaned_data['cards']
+                game_log.meld_cards = ','.join(form.cleaned_data['cards'])
                 game_log.save()
 
                 if not game.turn.hand:
@@ -583,3 +588,30 @@ def reset_token(request):
     token.save()
 
 
+@login_required
+def game_stats(request):
+    """
+    show game stats
+    1. show record for each player
+    2. show log of moves for a particular finished game
+    :param request:
+    :return:
+    """
+
+    print('getting to game_stats')
+
+    games = PlayerStats.objects.all()
+
+    context = dict()
+    context['games'] = games
+
+    return render(request, 'game/game_stats.html', context)
+
+
+@login_required
+def game_details(request, pk):
+    game_moves = GameLog.objects.filter(game_id=pk)
+    context = dict()
+    context['game_moves'] = game_moves
+
+    return render(request, 'game/game_details.html', context)

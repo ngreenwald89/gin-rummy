@@ -19,7 +19,8 @@ class Token(Model):
 
 class RummyPlayer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    hand = models.TextField()
+    # a hand should be no longer than 29 characters - that's 9 commas and 10 possibly two character numbers
+    hand = models.CharField(max_length=29, blank=True, null=False, default='')
 
     def __str__(self):
         return self.user.username
@@ -38,9 +39,12 @@ class RummyGame(models.Model):
     winner = models.ForeignKey(RummyPlayer, related_name='winner', on_delete=models.CASCADE, null=True)
     loser = models.ForeignKey(RummyPlayer, related_name='loser', on_delete=models.CASCADE, null=True)
     turn = models.ForeignKey(RummyPlayer, related_name='turn', on_delete=models.CASCADE)
-    current_card = models.TextField(default='')
-    deck = models.TextField(default='')
-    melds = models.TextField(default='')
+    current_card = models.CharField(max_length=2, blank=True, null=False, default='')
+    # deck max_length: 51 commas + 52*2 possibly two digit integers = 51 + 104 = 155
+    deck = models.CharField(max_length=155, blank=True, null=False, default='')
+    # meld max_length: 20 cards, 19 commas, 6 | for 6 separate melds = 20*2 + 19 + 6 = 65
+    melds = models.CharField(max_length=65, blank=True, null=False, default='')
+    last_updated = models.DateTimeField(auto_now=True)  # this should automatically be reset every time .save() called
 
     def meld_string_to_melds(self):
         """
@@ -74,13 +78,6 @@ class RummyGame(models.Model):
         self.melds = '|'.join(melds)
         self.save()
 
-    # this doesn't look right
-    def is_winner(self):
-        if self.turn.hand:
-            return False
-        else:
-            return True
-
 
 class GameLog(models.Model):
 
@@ -88,10 +85,11 @@ class GameLog(models.Model):
     turn = models.ForeignKey(RummyPlayer, related_name='player', on_delete=models.CASCADE)
     move_number = models.IntegerField()  # autoincrement?
     draw_option = models.TextField(choices=[('top_of_deck_card', 'top_of_deck_card'), ('current_card', 'current_card')])
-    draw_card = models.TextField(default='')
+    draw_card = models.CharField(max_length=2, blank=True, null=False, default='')
     meld_option = models.TextField(choices=[('play_meld', 'play_meld'), ('lay_off', 'lay_off'), ('continue_to_discard', 'continue_to_discard')])
-    meld_cards = models.TextField(default='')
-    discard_card = models.TextField(default='')
+    # meld_cards max_length: 12 commas + 13*2 possibly two digit integers = 12 + 26 = 38
+    meld_cards = models.CharField(max_length=38, blank=True, null=False, default='')
+    discard_card = models.CharField(max_length=2, blank=True, null=False, default='')
 
 
 class PlayerStats(models.Model):
