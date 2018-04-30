@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 # ,UserProfileModelForm
@@ -5,6 +7,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 
+from game.models import Token
 from game.views import reset_token
 from login_app.forms import UserForm
 
@@ -100,3 +103,12 @@ def user_login(request):
     else:
         #username or password are empty, redirect to the same page to retry.
         return render(request, 'login_app/login.html', {})
+
+
+def session_expired(request):
+    print(f'Session Id in the request is {request.session.items()}')
+    token = Token.objects.get(pk=request.session['token_id'])
+    token.lastUsed = datetime.datetime.now()
+
+    return HttpResponseRedirect('/login_app/user_login/')
+

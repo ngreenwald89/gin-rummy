@@ -1,6 +1,8 @@
+import datetime
 import logging
 import time
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Max
@@ -29,15 +31,53 @@ def start(request):
 
     logger.info('User id of the current request is : %s', request.user.id)
 
-    tokensCount = len(Token.objects.all())
+    tokens_count = len(Token.objects.all())
 
-    if tokensCount < 50:
-        logger.info('The tokens were not found, creating 50 tokens - to allow for 50 simultaneous games')
-        for idx in range(50):
-            token = Token(state=0)
-            token.save()
+    initializeTokens(tokens_count)
 
     tokens = Token.objects.all()
+
+
+    # for token in tokens:
+    #     if token.state == 2 and token.lastUsed is not None:
+    #         if token.user0 == request.user.username or token.user1 == request.user.username:
+    #             if datetime.datetime.now() - token.lastUsed < settings.SESSION_SECURITY_EXPIRE_AFTER:
+    #
+    #                 logger.info('Re-initialising the session to an existing session ')
+    #
+    #                 request.session['game_pk'] = token.id
+    #                 request.session['user0'] = request.user.username
+    #                 request.session['user1'] = token.user1
+    #
+    #                 return HttpResponseRedirect('/game/draw/')
+    #             else:
+    #                 logger.info('The session has expired, redirecting the user to login again')
+    #                 reset_token(request)
+    #
+    #                 return HttpResponseRedirect('/login_app/user_login/')
+    #
+    #     continue
+
+
+    for token in tokens:
+        if token.state == 2:
+            if token.user0 == request.user.username or token.user1 == request.user.username:
+                if datetime.datetime.now() - token.lastUsed < settings.SESSION_SECURITY_EXPIRE_AFTER:
+
+                    logger.info('Re-initialising the session to an existing session ')
+
+                    request.session['game_pk'] = token.id
+                    request.session['user0'] = request.user.username
+                    request.session['user1'] = token.user1
+
+                    return HttpResponseRedirect('/game/draw/')
+                else:
+                    logger.info('The session has expired, redirecting the user to login again')
+                    reset_token(request)
+
+                    return HttpResponseRedirect('/login_app/user_login/')
+
+        continue
 
     for token in tokens:
         logger.info("Token id being picked is: %s and the token state is: %s ", token.id, token.state)
@@ -78,6 +118,14 @@ def start(request):
             continue
 
 
+def initializeTokens(tokensCount):
+    if tokensCount < 50:
+        logger.info('The tokens were not found, creating 50 tokens - to allow for 50 simultaneous games')
+        for idx in range(50):
+            token = Token(state=0)
+            token.save()
+
+
 @login_required
 def startgame(request):
     """
@@ -103,6 +151,9 @@ def startgame(request):
     current_card = deck.pop().card_to_string()
     # first turn should be randomized
     first_turn = random.choice([player1, player2])
+
+    # Create a new game, only if NO existing game is found !
+
     game = RummyGame(id=request.session['game_pk'],
                      player1=player1,
                      player2=player2,
@@ -139,7 +190,7 @@ def gameover(request):
     return render(request, 'game/gameover.html', context)
 
 
-@login_required
+@login_required(login_url='/login_app/session_expired/')
 def draw(request):
     """
     https://www.thespruce.com/rummy-card-game-rules-and-strategies-411141
