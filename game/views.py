@@ -161,8 +161,18 @@ def draw(request):
     game_pk = request.session.get('game_pk')
     game = RummyGame.objects.get(pk=game_pk)
 
-    # if datetime.datetime.now - lastMove > 2 minutes, then end game
+    # if datetime.datetime.now - lastMove > 2 minutes, then end game.
+    # Whoever's turn it is has delayed too long and is the loser
     if (datetime.now(timezone.utc) - game.last_updated).seconds > 120:
+
+        if game.player1 == game.turn:
+            game.loser = game.player1
+            game.winner = game.player2
+
+        else:
+            game.loser = game.player2
+            game.winner = game.player1
+        game.save()
         return HttpResponseRedirect('/game/gameover/')
 
     if game.winner:
