@@ -1,8 +1,7 @@
 import datetime
 import logging
-import time
 import random
-
+import time
 from datetime import datetime, timezone
 
 from django.conf import settings
@@ -14,7 +13,8 @@ from django.shortcuts import render
 
 from game.forms import DiscardForm, MeldForm, DrawForm, PlayMeldForm, ChooseMeldForm
 from game.models import RummyGame, RummyPlayer, Token, GameLog, PlayerStats
-from game.rummy_utils import (initialize_deck, cards_to_string, sort_cards, string_to_card, string_to_cards, validate_meld)
+from game.rummy_utils import (initialize_deck, cards_to_string, sort_cards, string_to_card, string_to_cards,
+                              validate_meld)
 
 # Create your views here.
 
@@ -40,45 +40,23 @@ def start(request):
 
     tokens = Token.objects.all()
 
-
-    # for token in tokens:
-    #     if token.state == 2 and token.lastUsed is not None:
-    #         if token.user0 == request.user.username or token.user1 == request.user.username:
-    #             if datetime.datetime.now() - token.lastUsed < settings.SESSION_SECURITY_EXPIRE_AFTER:
-    #
-    #                 logger.info('Re-initialising the session to an existing session ')
-    #
-    #                 request.session['game_pk'] = token.id
-    #                 request.session['user0'] = request.user.username
-    #                 request.session['user1'] = token.user1
-    #
-    #                 return HttpResponseRedirect('/game/draw/')
-    #             else:
-    #                 logger.info('The session has expired, redirecting the user to login again')
-    #                 reset_token(request)
-    #
-    #                 return HttpResponseRedirect('/login_app/user_login/')
-    #
-    #     continue
-
-
     for token in tokens:
         if token.state == 2:
             if token.user0 == request.user.username or token.user1 == request.user.username:
-                if datetime.datetime.now() - token.lastUsed < settings.SESSION_SECURITY_EXPIRE_AFTER:
+                request.session['token_id'] = token.id
+                request.session['game_pk'] = token.id
+                game = RummyGame.objects.get(pk=token.id)
+                if (datetime.now(timezone.utc) - game.last_updated).seconds > settings.GAME_EXPIRY_SEC:
 
-                    logger.info('Re-initialising the session to an existing session ')
+                    if game.player1 == game.turn:
+                        game.loser = game.player1
+                        game.winner = game.player2
 
-                    request.session['game_pk'] = token.id
-                    request.session['user0'] = request.user.username
-                    request.session['user1'] = token.user1
-
-                    return HttpResponseRedirect('/game/draw/')
-                else:
-                    logger.info('The session has expired, redirecting the user to login again')
-                    reset_token(request)
-
-                    return HttpResponseRedirect('/login_app/user_login/')
+                    else:
+                        game.loser = game.player2
+                        game.winner = game.player1
+                        game.save()
+                        return HttpResponseRedirect('/game/gameover/')
 
         continue
 

@@ -117,7 +117,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS':{'min_length':9}
+        'OPTIONS':{'min_length':8}
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -157,6 +157,8 @@ LOGIN_URL = '/login_app/user_login/'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SECURITY_WARN_AFTER = 20
 SESSION_SECURITY_EXPIRE_AFTER = 30
+
+GAME_EXPIRY_SEC = 120
 
 #
 # SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
