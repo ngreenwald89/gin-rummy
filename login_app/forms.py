@@ -10,7 +10,3 @@ class UserForm(forms.ModelForm):
         fields = ('username', 'email', 'password')
 
 
-# class UserProfileModelForm(forms.ModelForm):
-#     class Meta():
-#         model = UserProfileModel
-#         # fields = ('portfolio_site','profile_pic')
